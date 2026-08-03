@@ -29,6 +29,7 @@ local function collect_surface_state(surfaces)
 		gauge_wind_speed:set(surface.wind_speed, { surface.name })
 		gauge_wind_orientation:set(surface.wind_orientation, { surface.name })
 		gauge_freeze_daytime:set(surface.freeze_daytime and 1 or 0, { surface.name })
+		gauge_surface_pollution:set(surface.get_total_pollution(), { surface.name })
 
 		for _, entity_type in ipairs(entity_count_types) do
 			local count = surface.count_entities_filtered({ type = entity_type })
@@ -75,7 +76,7 @@ end
 --- Entry point for the guarded nth-tick dispatcher.
 --- @param event NthTickEventData
 --- @return nil
-function collect_environment(event)
+function collect_environment(_event)
 	collect_simulation_state()
 	collect_surface_state(collected_surfaces())
 	collect_force_state()

@@ -29,6 +29,11 @@ include_platforms = settings.startup["graftorio3-include-platforms"].value --[[@
 entity_count_types = parse_entity_count_types(settings.startup["graftorio3-entity-count-types"].value --[[@as string]])
 collect_player_metrics = settings.startup["graftorio3-collect-player-metrics"].value --[[@as boolean]]
 
+-- Multi-server support (1.3.0): optional instance label on every series and
+-- configurable output filename so several servers can share one textfile dir.
+instance_label = settings.startup["graftorio3-instance-label"].value --[[@as string]]
+output_filename = sanitize_output_filename(settings.startup["graftorio3-output-filename"].value --[[@as string]])
+
 -- ============================================================================
 -- Gauge metrics (no labels)
 -- ============================================================================
@@ -232,6 +237,7 @@ gauge_exporter_output_bytes =
 	prometheus.gauge("factorio_exporter_output_bytes", "bytes written in the previous cycle")
 gauge_exporter_last_collection_tick =
 	prometheus.gauge("factorio_exporter_last_collection_tick", "game tick of the last completed collection")
+gauge_surface_pollution = prometheus.gauge("factorio_surface_pollution", "total pollution on the surface", { "surface" })
 --- @type Gauge
 gauge_platform_state = prometheus.gauge("factorio_platform_state", "platform state (1=active)", { "force", "platform", "state" })
 --- @type Gauge
@@ -393,7 +399,7 @@ script.on_load(function()
 	register_all_events()
 end)
 
-script.on_configuration_changed(function(event)
+script.on_configuration_changed(function(_event)
 	if script.active_mods["YARM"] then
 		storage.yarm_on_site_update_event_id = remote.call("YARM", "get_on_site_updated_event_id")
 		script.on_event(storage.yarm_on_site_update_event_id --[[@as string]], handle_yarm)

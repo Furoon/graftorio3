@@ -40,6 +40,7 @@ local watched_train = 0
 local watched_station = ""
 
 --- Debug helper: print a message if the event's train matches the watched train.
+-- luacheck: ignore watch_train watch_station
 --- @param event EventData.on_train_changed_state
 --- @param msg string
 local function watch_train(event, msg)
@@ -109,7 +110,7 @@ local seen = {}
 --- @param event EventData.on_train_changed_state
 --- @param duration number Trip duration in seconds (unused internally, kept for signature consistency)
 --- @param labels {[1]: string, [2]: string, [3]: uint} {from_station, to_station, train_id}
-local function direct_loop(event, duration, labels)
+local function direct_loop(_event, _duration, labels)
 	local from = labels[1]
 	local to = labels[2]
 	local train_id = labels[3]
@@ -135,9 +136,10 @@ local function direct_loop(event, duration, labels)
 		histogram_train_direct_loop_time:observe(total, sorted)
 	end
 
-	if seen[train_id][to] and seen[train_id][to][from] then
-		-- watch_train(event, from .. ":" .. to .. " lap " .. (game.tick - seen[train_id][to][from]) / TICKS_PER_SECOND)
-	end
+	-- Lap timing (disabled debug output); kept for reference:
+	-- if seen[train_id][to] and seen[train_id][to][from] then
+	-- 	watch_train(event, from .. ":" .. to .. " lap " .. (game.tick - seen[train_id][to][from]) / TICKS_PER_SECOND)
+	-- end
 
 	seen[train_id][from][to] = game.tick
 end
