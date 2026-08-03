@@ -7,6 +7,11 @@ cache = true
 
 -- Factorio API globals (read-only)
 read_globals = {
+  -- 1.2.0: environment/state metrics module
+  "entity_count_types",
+  "parse_entity_count_types",
+  "collect_player_metrics",
+  "collect_environment",
   -- 2.1 port: surface filtering (utils.lua) and power helpers
   "surface_allowlist",
   "include_platforms",

@@ -1,4 +1,31 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.0
+Date: 2026-08-03
+  Minor Features:
+    - New environment/state metrics module (env.lua), covering previously unused
+      parts of the runtime API:
+        * factorio_game_speed, factorio_tick_paused, factorio_ticks_played
+        * factorio_technology_price_multiplier, factorio_spoil_time_modifier
+        * factorio_peaceful_mode, factorio_solar_power_multiplier,
+          factorio_darkness, factorio_wind_speed, factorio_wind_orientation,
+          factorio_freeze_daytime (per surface)
+        * factorio_entities{surface,type} via count_entities_filtered
+          (default types include unit-spawner for enemy-pressure tracking;
+          configurable via graftorio3-entity-count-types)
+        * factorio_technologies_researched / factorio_technologies_available,
+          factorio_friendly_fire (per force)
+        * factorio_player_online_time_ticks, factorio_player_afk_time_ticks
+          (per player, opt-in via graftorio3-collect-player-metrics -- off
+          by default due to per-player label cardinality)
+    - New startup settings: graftorio3-entity-count-types,
+      graftorio3-collect-player-metrics.
+    - Renamed factorio_items_launched_total to factorio_items_launched: it is a
+      gauge, and the _total suffix is reserved for counters by Prometheus
+      convention (same class of fix as factorio_platforms in 1.1.0). Discovered
+      by promtool while verifying the new metrics; it never surfaced before
+      because the metric only appears once a rocket has actually launched.
+
+---------------------------------------------------------------------------------------------------
 Version: 1.1.0
 Date: 2026-08-03
   Major Features:

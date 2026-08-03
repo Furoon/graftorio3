@@ -28,6 +28,7 @@ ALLOWLIST=(
   utils.lua
   yarm.lua
   circuit-network.lua
+  env.lua
   settings.lua
   locale
   prometheus

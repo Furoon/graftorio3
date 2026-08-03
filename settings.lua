@@ -50,3 +50,21 @@ data:extend({
 		order = "b-include-platforms",
 	},
 })
+
+data:extend({
+	{
+		type = "string-setting",
+		setting_type = "startup",
+		name = "graftorio3-entity-count-types",
+		default_value = "assembling-machine,electric-pole,transport-belt,roboport,unit-spawner",
+		allow_blank = true,
+		order = "c-entity-count-types",
+	},
+	{
+		type = "bool-setting",
+		setting_type = "startup",
+		name = "graftorio3-collect-player-metrics",
+		default_value = false,
+		order = "d-collect-player-metrics",
+	},
+})

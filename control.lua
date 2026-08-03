@@ -7,6 +7,7 @@ require("events")
 require("power")
 require("research")
 require("circuit-network")
+require("env")
 
 --- @type number[] Parsed histogram bucket boundaries for train metrics
 bucket_settings = train_buckets(settings.startup["graftorio3-train-histogram-buckets"].value --[[@as string]])
@@ -23,6 +24,10 @@ disable_train_stats = settings.startup["graftorio3-disable-train-stats"].value -
 -- Surface filtering (2.1 port). Parsed once at load; startup settings cannot change at runtime.
 surface_allowlist = parse_surface_filter(settings.startup["graftorio3-surface-filter"].value --[[@as string]])
 include_platforms = settings.startup["graftorio3-include-platforms"].value --[[@as boolean]]
+
+-- Environment/state metrics settings (env.lua)
+entity_count_types = parse_entity_count_types(settings.startup["graftorio3-entity-count-types"].value --[[@as string]])
+collect_player_metrics = settings.startup["graftorio3-collect-player-metrics"].value --[[@as boolean]]
 
 -- ============================================================================
 -- Gauge metrics (no labels)
@@ -84,7 +89,7 @@ gauge_research_queue = prometheus.gauge("factorio_research_queue", "research", {
 
 --- @type Gauge
 gauge_items_launched =
-	prometheus.gauge("factorio_items_launched_total", "items launched in rockets", { "force", "name", "quality" })
+	prometheus.gauge("factorio_items_launched", "items launched in rockets", { "force", "name", "quality" })
 
 --- @type Gauge
 gauge_yarm_site_amount =
@@ -245,6 +250,30 @@ gauge_platform_damaged_tiles = prometheus.gauge("factorio_platform_damaged_tiles
 --- @type Gauge
 gauge_kr_antimatter_reactors = prometheus.gauge("factorio_kr_antimatter_reactors", "number of antimatter reactors", { "force", "surface" })
 
+-- Environment/state metrics (env.lua)
+gauge_game_speed = prometheus.gauge("factorio_game_speed", "map simulation speed multiplier (1.0 = normal)")
+gauge_tick_paused = prometheus.gauge("factorio_tick_paused", "whether the game tick is paused (1=paused)")
+gauge_ticks_played = prometheus.gauge("factorio_ticks_played", "ticks played since game creation, unaffected by pause")
+gauge_technology_price_multiplier =
+	prometheus.gauge("factorio_technology_price_multiplier", "difficulty setting: technology price multiplier")
+gauge_spoil_time_modifier = prometheus.gauge("factorio_spoil_time_modifier", "difficulty setting: spoil time modifier")
+
+gauge_peaceful_mode = prometheus.gauge("factorio_peaceful_mode", "whether peaceful mode is enabled (1=enabled)", { "surface" })
+gauge_solar_power_multiplier = prometheus.gauge("factorio_solar_power_multiplier", "solar power multiplier", { "surface" })
+gauge_darkness = prometheus.gauge("factorio_darkness", "surface darkness (0-1)", { "surface" })
+gauge_wind_speed = prometheus.gauge("factorio_wind_speed", "surface wind speed", { "surface" })
+gauge_wind_orientation = prometheus.gauge("factorio_wind_orientation", "surface wind orientation (0-1)", { "surface" })
+gauge_freeze_daytime = prometheus.gauge("factorio_freeze_daytime", "whether the surface freezes at night (1=freezes)", { "surface" })
+gauge_entity_count = prometheus.gauge("factorio_entities", "entity count by type (includes unit-spawner for enemy pressure)", { "surface", "type" })
+
+gauge_technologies_researched = prometheus.gauge("factorio_technologies_researched", "technologies researched", { "force" })
+gauge_technologies_total = prometheus.gauge("factorio_technologies_available", "technologies available", { "force" })
+gauge_friendly_fire = prometheus.gauge("factorio_friendly_fire", "whether friendly fire is enabled (1=enabled)", { "force" })
+
+gauge_player_online_time =
+	prometheus.gauge("factorio_player_online_time_ticks", "ticks this player has played this save", { "player" })
+gauge_player_afk_time = prometheus.gauge("factorio_player_afk_time_ticks", "ticks this player has been afk", { "player" })
+
 -- ============================================================================
 -- Event registration
 -- ============================================================================
@@ -280,6 +309,7 @@ function guarded_nth_tick(event)
 	guarded("core", collect_core, event)
 	guarded("power", on_power_tick, event)
 	guarded("circuit-network", on_circuit_network_tick, event)
+	guarded("environment", collect_environment, event)
 	guarded("write", write_metrics, event)
 end
 
