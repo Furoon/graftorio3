@@ -8,6 +8,8 @@ require("power")
 require("research")
 require("circuit-network")
 require("env")
+require("counters")
+require("diagnostics")
 
 --- @type number[] Parsed histogram bucket boundaries for train metrics
 bucket_settings = train_buckets(settings.startup["graftorio3-train-histogram-buckets"].value --[[@as string]])
@@ -238,6 +240,11 @@ gauge_exporter_output_bytes =
 gauge_exporter_last_collection_tick =
 	prometheus.gauge("factorio_exporter_last_collection_tick", "game tick of the last completed collection")
 gauge_surface_pollution = prometheus.gauge("factorio_surface_pollution", "total pollution on the surface", { "surface" })
+
+-- Event counters (counters.lua): true counters for rate() queries
+counter_events = prometheus.counter("factorio_events_total", "game events observed since map creation", { "type" })
+counter_player_deaths = prometheus.counter("factorio_player_deaths_total", "player deaths", { "player" })
+counter_player_kills = prometheus.counter("factorio_player_kills_total", "entities killed by a player", { "player" })
 --- @type Gauge
 gauge_platform_state = prometheus.gauge("factorio_platform_state", "platform state (1=active)", { "force", "platform", "state" })
 --- @type Gauge
@@ -300,6 +307,8 @@ local function guarded(name, fn, event)
 	local ok, err = pcall(fn, event)
 	if not ok then
 		counter_collector_errors:inc(1, { name })
+		storage.collector_error_counts = storage.collector_error_counts or {}
+		storage.collector_error_counts[name] = (storage.collector_error_counts[name] or 0) + 1
 		storage.collector_error_logged = storage.collector_error_logged or {}
 		if not storage.collector_error_logged[name] then
 			storage.collector_error_logged[name] = true
@@ -316,6 +325,7 @@ function guarded_nth_tick(event)
 	guarded("power", on_power_tick, event)
 	guarded("circuit-network", on_circuit_network_tick, event)
 	guarded("environment", collect_environment, event)
+	guarded("counters", collect_counters, event)
 	guarded("write", write_metrics, event)
 end
 
@@ -329,6 +339,7 @@ end
 local function guarded_destroy(event)
 	guarded("power", on_power_destroy, event)
 	guarded("circuit-network", on_circuit_network_destroy, event)
+	guarded("counters", on_counter_entity_died, event)
 end
 
 local function guarded_train(event)
@@ -336,6 +347,7 @@ local function guarded_train(event)
 end
 
 local function register_all_events()
+	register_diagnostics_command()
 	script.on_nth_tick(nth_tick, guarded_nth_tick)
 
 	script.on_event(defines.events.on_player_joined_game, register_events_players)
@@ -350,7 +362,17 @@ local function register_all_events()
 	end
 
 	-- research events
-	script.on_event(defines.events.on_research_finished, on_research_finished)
+	script.on_event(defines.events.on_research_finished, function(e)
+		guarded("research", on_research_finished, e)
+		guarded("counters", on_counter_research_finished, e)
+	end)
+
+	script.on_event(defines.events.on_rocket_launched, function(e)
+		guarded("counters", on_counter_rocket_launched, e)
+	end)
+	script.on_event(defines.events.on_player_died, function(e)
+		guarded("counters", on_counter_player_died, e)
+	end)
 
 	-- Build/destroy events are shared by power.lua and circuit-network.lua.
 	-- Factorio allows only ONE handler per event per mod: a second on_event()

@@ -210,6 +210,7 @@ end
 --- @param event NthTickEventData
 function write_metrics(_event)
 	gauge_exporter_last_collection_tick:set(game.tick)
+	storage.last_collection_tick = game.tick
 	local out = prometheus.collect()
 
 	local series = 0

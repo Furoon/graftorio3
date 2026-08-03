@@ -50,6 +50,9 @@ Generated from control.lua by scripts/gen_metrics.py -- do not edit by hand.
 | factorio_exporter_output_bytes | gauge |  | bytes written in the previous cycle |
 | factorio_exporter_last_collection_tick | gauge |  | game tick of the last completed collection |
 | factorio_surface_pollution | gauge | surface | total pollution on the surface |
+| factorio_events_total | counter | type | game events observed since map creation |
+| factorio_player_deaths_total | counter | player | player deaths |
+| factorio_player_kills_total | counter | player | entities killed by a player |
 | factorio_platform_state | gauge | force, platform, state | platform state (1=active) |
 | factorio_platform_weight | gauge | force, platform | platform total weight |
 | factorio_platform_speed | gauge | force, platform | platform speed |
