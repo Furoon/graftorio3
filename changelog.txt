@@ -1,0 +1,32 @@
+---------------------------------------------------------------------------------------------------
+Version: 1.0.0
+Date: 2026-03-15
+  Features:
+    - add Justfile
+  Optimizations:
+    - performance improvements and misc fix
+  Bugfixes:
+    - correct the git path
+    - correctly look up max wire distance---------------------------------------------------------------------------------------------------
+Version: 1.1.0
+Date: 2026-08-03
+  Major Features:
+    - Factorio 2.1 compatibility.
+    - New startup setting "Surface allowlist": restrict collection to named surfaces.
+    - New startup setting "Include space platforms" (default off): space platforms are
+      separate surfaces and multiply per-surface work and label cardinality.
+  Bugfixes:
+    - Replaced LuaEntity.neighbours and LuaEntity.disconnect_neighbour(), both removed
+      in 2.1, with the LuaWireConnector API. Power switch handling raised
+      "LuaEntity doesn't contain key neighbours" as soon as a switch was tracked.
+    - Build and destroy events were registered twice (power.lua, then circuit-network.lua).
+      Factorio allows one handler per event per mod, so the second registration silently
+      replaced the first and all power build/destroy tracking was dead. Both modules are
+      now dispatched from a single combined handler.
+    - Metric collection iterated game.players instead of game.forces. A dedicated server
+      that no player had joined produced no production, pollution-per-force, evolution,
+      logistics, research or platform metrics at all.
+    - factorio_items_launched was always empty: LuaForce.items_launched is a
+      dictionary<string, uint>, and the code iterated it with ipairs().
+    - Research and space platform gauges were reset inside the per-force loop, so each
+      force wiped the previous force's series. Reset moved ahead of the loop.

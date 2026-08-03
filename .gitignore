@@ -6,3 +6,4 @@ data/prometheus/*
 pkg/*.zip
 .DS_store
 pkg/
+node_modules/
