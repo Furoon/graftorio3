@@ -1,10 +1,43 @@
 {
-  "name": "graftorio2",
-  "version": "0.0.20",
-  "title": "graftorio2",
-  "author": "remijouannet",
-  "description": "visualize metrics from your factorio game in grafana",
-  "homepage": "https://github.com/remijouannet/graftorio2",
-  "dependencies": ["? YARM >= 0.8.207"],
-  "factorio_version": "1.1"
+  "name": "graftorio2-geo",
+  "version": "1.1.0",
+  "title": "graftorio2 - Geo's version",
+  "author": "Geostyx",
+  "description": "Visualize metrics from your factorio game in grafana",
+  "homepage": "https://github.com/jahands/graftorio2",
+  "dependencies": [
+    "base >= 2.1.0",
+    "? YARM >= 0.8.207"
+  ],
+  "factorio_version": "2.1",
+  "quality_required": false,
+  "rail_bridges_required": false,
+  "space_travel_required": false,
+  "spoiling_required": false,
+  "freezing_required": false,
+  "segmented_units_required": false,
+  "expansion_shaders_required": false,
+  "package": {
+    "ignore": [
+      ".github/**",
+      ".gitattributes",
+      ".gitignore",
+      ".luacheckrc",
+      ".luarc.json",
+      ".mise.toml",
+      ".releaserc",
+      ".vscode/**",
+      "bun.lock",
+      "config/**",
+      "CONTRIBUTING.md",
+      "data/**",
+      "docker-compose*.yml",
+      "Justfile",
+      "Metrics.md",
+      "node_modules/**",
+      "package.json",
+      "pkg/**",
+      "prometheus/**"
+    ]
+  }
 }

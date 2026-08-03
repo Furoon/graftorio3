@@ -1,14 +1,17 @@
 
 ![](https://mods-data.factorio.com/assets/ad36f974db944b1540ce50a0aea46221f26f7c36.thumb.png)
-[![Github All Releases](https://img.shields.io/github/downloads/remijouannet/graftorio2/total.svg)]()
 
-# [graftorio2](https://mods.factorio.com/mod/graftorio2)
+# graftorio2-narf
 
-**Fork of [graftorio](https://github.com/afex/graftorio)**
+**Enhanced fork of [graftorio2-narf](https://mods.factorio.com/mod/graftorio2-narf) with my own tweaks**
 
-[中文文档](./README_cn.md)
+Visualize metrics from your Factorio game in Grafana
 
-visualize metrics from your Factorio game in Grafana
+## What's New in This Fork
+
+* nothing yet
+
+Original fork of [graftorio](https://github.com/afex/graftorio)
 
 ![](https://mods-data.factorio.com/assets/89653f5de75cdb227b5140805d632faf41459eee.png)
 
@@ -23,7 +26,7 @@ graftorio2 automates this process using docker, or you can set these up by hand.
 
 ## Installation
 
-1. download the latest [release](https://github.com/remijouannet/graftorio2/releases), and extract it into the location you want to host the local database
+1. download the latest [release](https://github.com/jahands/graftorio2/releases), and extract it into the location you want to host the local database
 2. [install docker](https://docs.docker.com/install/)
    - if using windows, you will need to be running Windows 10 Pro
 3. if using macOS or Linux, open the extracted `docker-compose.yml` in a text editor and uncomment the correct path to your Factorio install
@@ -225,4 +228,3 @@ to see if the Grafana data source can read correctly, there is already a include
 this should show a linear growing `Factorio Tick` panel.  
 alternatively start a new dashboard and add a graph with the query `factorio_item_production_input`.  
 the graph should render the total of every item produced in your game.  
-
