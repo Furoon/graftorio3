@@ -72,3 +72,27 @@ function collected_surfaces()
 	end
 	return out
 end
+
+-- ============================================================================
+-- Entity-count type filtering (added for the environment/state metrics module)
+-- ============================================================================
+
+--- @type table<string, boolean>? Parsed entity-type list for factorio_entity_count; nil = disabled
+entity_count_types = nil
+
+--- Parse the entity-count-types startup setting the same way parse_surface_filter
+--- parses the surface allowlist: comma-separated, trimmed, empty means "none".
+--- @param raw string
+--- @return string[] types
+function parse_entity_count_types(raw)
+	local set = parse_surface_filter(raw)
+	if not set then
+		return {}
+	end
+	local out = {}
+	for name, _ in pairs(set) do
+		out[#out + 1] = name
+	end
+	table.sort(out)
+	return out
+end

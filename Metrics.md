@@ -62,7 +62,7 @@ Please read the warning regarding the cardinality of train metrics!
 | Name                            | Labels                             | Description                                                                                       |
 |---------------------------------|------------------------------------|---------------------------------------------------------------------------------------------------|
 | `factorio_research_queue`       | force<br/>name<br/>level<br/>index | The progress of each research in the queue, with its associated level if infinite, for each force |
-| `factorio_items_launched_total` | force<br/>name                     | How many of each item have been sent to space by each force                                       |
+| `factorio_items_launched` | force<br/>name                     | How many of each item have been sent to space by each force                                       |
 
 ### Trains
 
@@ -126,3 +126,25 @@ The following metrics are only available if their respective mod is installed.
 | factorio_exporter_series | | Metric series written in the previous cycle |
 | factorio_exporter_output_bytes | | Bytes written in the previous cycle |
 | factorio_exporter_last_collection_tick | | Game tick of the last completed collection |
+
+## Environment / state (added in 1.2.0)
+
+| Metric | Labels | Description |
+| --- | --- | --- |
+| factorio_game_speed | | Map simulation speed multiplier (1.0 = normal) |
+| factorio_tick_paused | | Whether the game tick is paused (1=paused) |
+| factorio_ticks_played | | Ticks played since game creation, unaffected by pause |
+| factorio_technology_price_multiplier | | Difficulty setting |
+| factorio_spoil_time_modifier | | Difficulty setting |
+| factorio_peaceful_mode | surface | Whether peaceful mode is enabled |
+| factorio_solar_power_multiplier | surface | Solar power multiplier |
+| factorio_darkness | surface | Darkness (0-1) |
+| factorio_wind_speed | surface | Wind speed |
+| factorio_wind_orientation | surface | Wind orientation (0-1) |
+| factorio_freeze_daytime | surface | Whether the surface freezes at night |
+| factorio_entities | surface, type | Entity count by prototype type (default types include unit-spawner) |
+| factorio_technologies_researched | force | Technologies researched |
+| factorio_technologies_available | force | Technologies available |
+| factorio_friendly_fire | force | Whether friendly fire is enabled |
+| factorio_player_online_time_ticks | player | Ticks played this save (opt-in) |
+| factorio_player_afk_time_ticks | player | Ticks afk (opt-in) |
