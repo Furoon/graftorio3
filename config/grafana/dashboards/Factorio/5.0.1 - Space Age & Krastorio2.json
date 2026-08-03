@@ -87,7 +87,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "factorio_platform_count{force=\"player\"}",
+          "expr": "factorio_platforms{force=\"player\"}",
           "refId": "A"
         }
       ],

@@ -7,6 +7,13 @@ cache = true
 
 -- Factorio API globals (read-only)
 read_globals = {
+  -- 2.1 port: surface filtering (utils.lua) and power helpers
+  "surface_allowlist",
+  "include_platforms",
+  "parse_surface_filter",
+  "surface_enabled",
+  "collected_surfaces",
+  "copper_side_network",
   "data",
   "mods",
   "settings",

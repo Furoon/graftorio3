@@ -121,7 +121,9 @@ function register_events(event)
 					local contents = network.get_contents()
 					if contents ~= nil then
 						for _, entry in ipairs(contents) do
-							local quality_name = entry.quality and entry.quality.name or "normal" ---@diagnostic disable-line: undefined-field -- quality.name exists at runtime
+							-- quality is a prototype-name string in the 2.x API; keep table form for safety
+							local q = entry.quality
+							local quality_name = (type(q) == "table" and q.name) or (type(q) == "string" and q) or "normal"
 							gauge_logistic_network_items:set(entry.count, { force.name, surface, network_id, entry.name, quality_name })
 						end
 					end
@@ -205,9 +207,9 @@ function register_events(event)
 	on_circuit_network_tick(event)
 
 	if server_save then
-		helpers.write_file("graftorio2/game.prom", prometheus.collect(), false, 0)
+		helpers.write_file("graftorio3/game.prom", prometheus.collect(), false, 0)
 	else
-		helpers.write_file("graftorio2/game.prom", prometheus.collect(), false)
+		helpers.write_file("graftorio3/game.prom", prometheus.collect(), false)
 	end
 end
 

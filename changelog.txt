@@ -1,20 +1,19 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.0.0
-Date: 2026-03-15
-  Features:
-    - add Justfile
-  Optimizations:
-    - performance improvements and misc fix
-  Bugfixes:
-    - correct the git path
-    - correctly look up max wire distance---------------------------------------------------------------------------------------------------
 Version: 1.1.0
 Date: 2026-08-03
   Major Features:
+    - Renamed to graftorio3 for the standalone mod portal release. All startup
+      settings use the graftorio3- prefix; existing graftorio2 settings reset to
+      defaults. Metrics are written to script-output/graftorio3/game.prom.
     - Factorio 2.1 compatibility.
     - New startup setting "Surface allowlist": restrict collection to named surfaces.
     - New startup setting "Include space platforms" (default off): space platforms are
       separate surfaces and multiply per-surface work and label cardinality.
+  Changes:
+    - Renamed metric factorio_platform_count to factorio_platforms: the _count
+      suffix is reserved for histogram/summary series by Prometheus convention
+      (flagged by promtool). Done before the first portal release so no existing
+      dashboards break.
   Bugfixes:
     - Replaced LuaEntity.neighbours and LuaEntity.disconnect_neighbour(), both removed
       in 2.1, with the LuaWireConnector API. Power switch handling raised
@@ -30,3 +29,20 @@ Date: 2026-08-03
       dictionary<string, uint>, and the code iterated it with ipairs().
     - Research and space platform gauges were reset inside the per-force loop, so each
       force wiped the previous force's series. Reset moved ahead of the loop.
+    - Constant combinator rescan iterated game.players as well: combinators that
+      existed at server start were never tracked on a player-less dedicated server.
+      Rescan now iterates game.forces.
+    - Circuit signal and logistic item quality labels always reported "normal":
+      quality is a prototype-name string in the 2.x API, not an object with .name.
+    - Combinator build/destroy tracking filtered by entity name while the rescan
+      filtered by type; modded constant combinators are now tracked consistently.
+---------------------------------------------------------------------------------------------------
+Version: 1.0.0
+Date: 2026-03-15
+  Features:
+    - add Justfile
+  Optimizations:
+    - performance improvements and misc fix
+  Bugfixes:
+    - correct the git path
+    - correctly look up max wire distance
