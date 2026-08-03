@@ -1,230 +1,91 @@
+# graftorio3
 
-![](https://mods-data.factorio.com/assets/ad36f974db944b1540ce50a0aea46221f26f7c36.thumb.png)
+**Prometheus metrics for your Factorio server — ported to Factorio 2.1, built for headless dedicated servers.**
 
-# graftorio2-narf
+graftorio3 exports what your factory is doing — production, power, logistics,
+trains, research, evolution, circuit signals, space platforms — as native
+[Prometheus](https://prometheus.io/) text format, written straight to
+`script-output/graftorio3/game.prom` every few seconds. Point a
+[node_exporter textfile collector](https://github.com/prometheus/node_exporter#textfile-collector)
+at it and your factory shows up in Grafana next to your CPU graphs, where it
+belongs.
 
-**Enhanced fork of [graftorio2-narf](https://mods.factorio.com/mod/graftorio2-narf) with my own tweaks**
+No sidecar process. No agent. No RCON polling. The mod writes, Prometheus scrapes.
 
-Visualize metrics from your Factorio game in Grafana
+## Factorio 2.1
 
-## What's New in This Fork
+This fork runs on **Factorio 2.1** (Space Age included) and is verified against
+the 2.1 runtime API. The APIs that 2.1 removed (`LuaEntity.neighbours`,
+`disconnect_neighbour()`) have been replaced with the `LuaWireConnector` API,
+and a set of long-standing silent failures are fixed — most of them only
+visible on the exact setup this mod is for:
 
-* nothing yet
+* Metric collection iterated `game.players` instead of `game.forces`, so a
+  **dedicated server nobody had joined yet collected almost nothing**.
+* Build/destroy events were registered twice; Factorio keeps one handler per
+  event per mod, so all power build/destroy tracking was silently dead.
+* `factorio_items_launched` was always empty, quality labels always reported
+  `"normal"`, and multi-force setups wiped each other's research series.
 
-Original fork of [graftorio](https://github.com/afex/graftorio)
+## Surface filtering (Space Age)
 
-![](https://mods-data.factorio.com/assets/89653f5de75cdb227b5140805d632faf41459eee.png)
+Every space platform is its own surface. On a mature Space Age save that
+multiplies per-surface collection work and Prometheus label cardinality.
+Two startup settings keep this under control:
 
-## What is this?
+| Setting | Default | Effect |
+|---|---|---|
+| `graftorio3-surface-filter` | *(empty)* | Comma-separated surface allowlist. Empty = all surfaces. |
+| `graftorio3-include-platforms` | off | Collect metrics for space platform surfaces. |
+| `graftorio3-nth-tick` | 300 | How often (in ticks) metrics are written. |
+| `graftorio3-disable-train-stats` | off | Train histograms carry `train_id`/station labels — disable on megabases if cardinality bites. |
 
-[Grafana](https://grafana.com/) is an open-source project for rendering time-series metrics.  
-by using [graftorio2](https://mods.factorio.com/mod/graftorio2), you can create a dashboard with various charts monitoring aspects of your Factorio factory.  
-this dashboard is viewed using a web browser outside of the game client. (works great in a 2nd monitor!)  
-
-in order to use graftorio2, you need to run the Grafana software and a database called [Prometheus](https://prometheus.io/) locally.  
-graftorio2 automates this process using docker, or you can set these up by hand.
+On a 5-surface benchmark map, restricting collection to one surface cut the
+series count from 313 to 77 and roughly halved collection cost. A full
+collection cycle costs about 4–8 ms on modest hardware — a comparable
+prototype-iterating exporter costs ~45 ms per cycle on the same map.
 
 ## Installation
 
-1. download the latest [release](https://github.com/jahands/graftorio2/releases), and extract it into the location you want to host the local database
-2. [install docker](https://docs.docker.com/install/)
-   - if using windows, you will need to be running Windows 10 Pro
-3. if using macOS or Linux, open the extracted `docker-compose.yml` in a text editor and uncomment the correct path to your Factorio install
-   - for Linux update the permissions in the data dir (since the containers need those rights):
-   - `chown -R 472 config/grafana`
-   - `chown -R 65534 config/prometheus`
-   - `chown -R 472 data/grafana`
-   - `chown -R 65534 data/prometheus`
-4. using a terminal, run `docker-compose up` inside the extracted directory
-5. load `localhost:3000` in a browser, **you should login once and set a secure password!**
-   - there is no need to configure anything:
-   - Prometheus is already configured as default datasource
-6. launch factorio
-7. install the "graftorio2" mod via the mods menu
-8. load up your game, and see your statistics in the Grafana dashboards
+**Server (recommended path):**
 
-## Hosting
+1. Install `graftorio3` from the [mod portal](https://mods.factorio.com/mod/graftorio3)
+   (or drop the release zip into your server's `mods/` folder).
+2. Make `script-output/graftorio3/` readable by your node_exporter and add:
+   ```
+   --collector.textfile.directory=/path/to/factorio/script-output/graftorio3
+   ```
+3. Metrics appear as `factorio_*` on your existing node_exporter scrape target.
 
-whenever you want to publish your dashboard to the public you can do this by placing this upon a server and opening up the ports for your game.  
-preferable all runs on the same server, but separating the game and the Grafana dahsboard is possible.  
-in the following example we'll explain on how to set it up all on 1 server.  
+**All-in-one (Grafana + Prometheus via Docker):** the repository ships a
+`docker-compose.yml` and pre-built Grafana dashboards under `config/` for a
+self-contained local stack. This is a development/convenience setup — none of
+it is part of the mod zip.
 
-### Part 1: The Website
+See [Metrics.md](Metrics.md) for the full list of exported metric families.
 
-when ever you are hosting this on a server it's prefered to run this as the docker instance.  
-we placed an [nginx](https://nginx.org/) as reverse proxy in front of it to forward the http(s) requests to the Grafana server.  
+## Fork lineage
 
-```nginx
-server {
-	listen 80;
-	listen [::]:80;
-	server_name domain.name;
-	return 301 https://domain.name$request_uri;
-}
+This is a fork, standing on a lot of prior work:
 
-server {
-	location / {
-		proxy_pass http://127.0.0.1:3000/;
-		proxy_set_header Host $host;
-		proxy_set_header X-Real-IP $remote_addr;
-		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-	}
+* [graftorio](https://github.com/afex/graftorio) by afex — the original idea
+* [graftorio2](https://github.com/remijouannet/graftorio2) by remijouannet — the 1.1/2.0 era maintenance
+* [jahands/graftorio2](https://github.com/jahands/graftorio2) — circuit network metrics, Space Age platform metrics, tooling
 
-    ssl on;
-    listen [::]:443 ssl;
-    listen 443 ssl;
-    # Here we used a letsencrypt cert (stripped out the actual files)
-    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-}
-```
+graftorio3 continues from jahands' tree: ported to Factorio 2.1, renamed to
+avoid setting conflicts with installed graftorio2 variants, with the
+dedicated-server fixes above, surface filtering, and an allowlist-based
+release pipeline that guarantees the published mod zip contains the mod and
+nothing else.
 
-### Part 2: The Grafana settings
+## Development
 
-change the `environment:` variable in `docker-compose.yml`.  
-for example the domain name and the root URL you're going to use for the public.  
-this way dashboards can be made visible to the public.  
-for more details consult the [Grafana docker documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-docker/).  
+CI runs luacheck, an allowlist packaging dry-run with a forbidden-content
+gate, and a Factorio headless smoke test on every push. Releases are
+tag-driven: pushing `vX.Y.Z` verifies tag == `info.json` == changelog, builds
+the zip, smoke-tests it, uploads it to the mod portal and attaches it to a
+GitHub release. See `scripts/` and `.github/workflows/`.
 
-for example:
-```yaml
-    environment:
-      - GF_SERVER_DOMAIN=domain.name
-      - GF_SERVER_ROOT_URL=https://%(domain)s/graftorio
-      - GF_SERVER_SERVE_FROM_SUB_PATH=true # the `/graftorio` part of URL
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_AUTH_BASIC_ENABLED=false
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
-      - GF_AUTH_ANONYMOUS_HIDE_VERSION=true
-```
+## License
 
-### Part 3: The Prometheus settings
-
-like for Grafana you may want to set some custom propperties for your Prometheus backend.
-but for Prometheus you need to set them as `command:` inside the `docker-compose.yml`.
-for more details consult the [Prometheus docker documentation](https://prometheus.io/docs/prometheus/latest/configuration/configuration/)
-
-for example:
-```yaml
-    command:
-      - '--storage.tsdb.retention.time=14d'
-```
-
-### Part 4: The exporter
-
-the exporter needs to have access to your game.prom file, so change the path in the `docker-compose.yml` to where `script-output/graftorio` is found.  
-
-**Separate servers**
-
-whenever you want to run the game on a different server you would have to change a few things.
-
-1. the exporter needs to run on the same server/computer as your Factorio server/instance.
-2. the Factorio server/instance doesn't need the Prometheus and Grafana dockers. so remove those 2 entries from the `docker-compose.yml`
-3. the exporter needs to be accesible from the web, so that the Prometheus db can access it to load in the required data. more information for the exporter is found here https://github.com/Prometheus/node_exporter
-4. change over the `config/prometheus/prometheus.yml` to let the targets point to your exporters ip:port
-
-however when you want to separate this all, keep in mind that most of the default settings in this readme/repo are not correct.  
-so these have to be changed to your needs.
-
-### Finally
-
-open your http://domain.name and see the login for Grafana.
-keep in mind that this short guide doesn't explain on how to properly secure everything. this is up to you to fix yourself.
-
-## Metrics
-
-The list of currently included metrics can be found in [Metrics.md](Metrics.md).
-
-## Dashboards
-
-this repository includes a variety of ready to use dashboards.  
-those dashboards are from [Kariton/graftorio2-dashboards](https://github.com/Kariton/graftorio2-dashboards).  
-the dashboards will be updated within this repostory if new versions are available.  
-
-all dashboards support a variety of different filters, panel links as well as data links.  
-for example: `Force`, `TimeScale`, `Network`, `Item / Fluid / Building / etc.`  
-  - Force: default `player` - some mods provide their own identifyer.
-  - TimeScale: default `Minute` - is used to calculate values per `Second / Minute / Hour`.
-  - Network: default `all` - depending on context the available networks like `electricity / logistic`.
-  - Item / Fluid / Building etc.: default `all` -  depending on context the available entities.
-
-
-### `Info` - overall stats
-  - UPS
-  - Game Time (Play Time)
-  - Total Players (unique players)
-  - Current online players
-  - Map Seed
-  - Installed mods
-  - Evolution
-  - Evolution Composition
-  - Current research progress
-  - research queue
-  - total rockets launched
-  - rockets per `TimeScale` based on last hour
-
-### `Items` - important items - delta production / consumption
-  - Science delta
-  - Circuits delta
-  - Materials delte (Iron, Copper, Plastic, Steel)
-  - Components delte (Battery, FRF, LDS, RCU, Rocket Fuel)
-
-### `Default` - rebuild of ingame graphs (as close as possible)
-  - 1.1 - Default: Electricity.json
-  - 1.2 - Default: Items.json
-  - 1.3 - Default: Fluids.json
-  - 1.4 - Default: Buildings.json
-  - 1.5 - Default: Pollution.json
-  - 1.6 - Default: Kills.json
-  - 1.7 - Default: Logistics.json
-
-### `Rate` - Various interpretation of "rate"
-  - 2.0.1 - Rate: Electricity.json
-  - 2.0.2 - Rate: Items.json
-  - 2.0.2.1 - Rate: Storage.json
-  - 2.0.2.2 - Rate: Science Packs.json
-  - 2.0.3 - Rate: Fluids.json
-  - 2.0.4 - Rate: Buildings.json
-  - 2.0.5 - Rate: Pollution.json
-  - 2.0.6 - Rate: Kills.json
-  - 2.0.7 - Rate: Evolution.json
-  - 2.0.8 - Rate: Research.json
-  - 2.0.9 - Rate: Rockets.json
-  - 2.1.0 - Rate: Players.json
-
-### `Misc` - detailed presentation in various forms
-  - 3.0.1 - Misc: Items.json
-  - 3.0.2 - Misc: Buildings.json
-  - 3.0.4 - Misc: Logistic Networks.json
-  - 3.0.4.1 - Misc: Logistic Items.json
-  - 3.0.4.2 - Misc: Robots.json
-  - 3.0.5 - Misc: Trains.json
-
-### `Mod` - dashboards dedicated to display mod related information
-  - 4.0.1 - Mod: YARM.json
-
-## Debugging
-
-### mod
-
-to see if Factorio is generating stats, confirm a `game.prom` file exists at the configured exporter volume directory.  when opened, it should look something like this:
-
-```
-# HELP factorio_item_production_input items produced
-# TYPE factorio_item_production_input gauge
-factorio_item_production_input{force="player",name="burner-mining-drill"} 3
-factorio_item_production_input{force="player",name="iron-chest"} 1
-```
-
-### Prometheus
-
-to see if Prometheus is scraping the data, load `localhost:9090/targets` in a browser and confirm that the status is "UP".  
-you should see the target from `config/Prometheus/Prometheus.yml`.  
-
-### Grafana
-
-to see if the Grafana data source can read correctly, there is already a included `graftorio2` dashboard.  
-this should show a linear growing `Factorio Tick` panel.  
-alternatively start a new dashboard and add a graph with the query `factorio_item_production_input`.  
-the graph should render the total of every item produced in your game.  
+MIT, same as its ancestors. See [LICENSE](LICENSE).
