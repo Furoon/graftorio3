@@ -29,6 +29,8 @@ ALLOWLIST=(
   yarm.lua
   circuit-network.lua
   env.lua
+  counters.lua
+  diagnostics.lua
   settings.lua
   locale
   prometheus
