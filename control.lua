@@ -219,6 +219,14 @@ gauge_power_production_output =
 
 --- @type Gauge
 gauge_platform_count = prometheus.gauge("factorio_platforms", "number of space platforms", { "force" })
+gauge_rockets_launched = prometheus.gauge("factorio_rockets_launched", "rockets launched per force", { "force" })
+counter_collector_errors =
+	prometheus.counter("factorio_collector_errors_total", "collector stages that raised an error", { "module" })
+gauge_exporter_series = prometheus.gauge("factorio_exporter_series", "metric series written in the previous cycle")
+gauge_exporter_output_bytes =
+	prometheus.gauge("factorio_exporter_output_bytes", "bytes written in the previous cycle")
+gauge_exporter_last_collection_tick =
+	prometheus.gauge("factorio_exporter_last_collection_tick", "game tick of the last completed collection")
 --- @type Gauge
 gauge_platform_state = prometheus.gauge("factorio_platform_state", "platform state (1=active)", { "force", "platform", "state" })
 --- @type Gauge
@@ -243,8 +251,56 @@ gauge_kr_antimatter_reactors = prometheus.gauge("factorio_kr_antimatter_reactors
 
 --- Register all event handlers. Called from both on_init and on_load to ensure
 --- handlers are active in both new-game and save-load scenarios.
+
+--- Run one collector stage isolated from the others. A failing stage
+--- increments factorio_collector_errors_total{module} and logs once per
+--- module instead of stopping the game with an error dialog. Registered
+--- event handlers stay alive and the remaining stages still run, so a
+--- single broken collector (e.g. from an unexpected mod combination)
+--- degrades one metric family instead of killing the server.
+--- @param name string
+--- @param fn function
+--- @param event any
+local function guarded(name, fn, event)
+	local ok, err = pcall(fn, event)
+	if not ok then
+		counter_collector_errors:inc(1, { name })
+		storage.collector_error_logged = storage.collector_error_logged or {}
+		if not storage.collector_error_logged[name] then
+			storage.collector_error_logged[name] = true
+			log("[graftorio3] collector stage '" .. name .. "' failed: " .. tostring(err))
+		end
+	end
+	return ok
+end
+
+--- nth-tick dispatcher: every stage runs guarded, the write always happens.
+--- @param event NthTickEventData
+function guarded_nth_tick(event)
+	guarded("core", collect_core, event)
+	guarded("power", on_power_tick, event)
+	guarded("circuit-network", on_circuit_network_tick, event)
+	guarded("write", write_metrics, event)
+end
+
+--- Guarded wrappers for the high-frequency entity event handlers: power and
+--- circuit tracking stay isolated from each other here as well.
+local function guarded_build(event)
+	guarded("power", on_power_build, event)
+	guarded("circuit-network", on_circuit_network_build, event)
+end
+
+local function guarded_destroy(event)
+	guarded("power", on_power_destroy, event)
+	guarded("circuit-network", on_circuit_network_destroy, event)
+end
+
+local function guarded_train(event)
+	guarded("train", register_events_train, event)
+end
+
 local function register_all_events()
-	script.on_nth_tick(nth_tick, register_events)
+	script.on_nth_tick(nth_tick, guarded_nth_tick)
 
 	script.on_event(defines.events.on_player_joined_game, register_events_players)
 	script.on_event(defines.events.on_player_left_game, register_events_players)
@@ -254,7 +310,7 @@ local function register_all_events()
 
 	-- train events
 	if not disable_train_stats then
-		script.on_event(defines.events.on_train_changed_state, register_events_train)
+		script.on_event(defines.events.on_train_changed_state, guarded_train)
 	end
 
 	-- research events
@@ -264,28 +320,18 @@ local function register_all_events()
 	-- Factorio allows only ONE handler per event per mod: a second on_event()
 	-- call silently replaces the first. They must therefore be dispatched from
 	-- a single combined handler, not registered twice.
-	local function on_any_build(event)
-		on_power_build(event)
-		on_circuit_network_build(event)
-	end
-
-	local function on_any_destroy(event)
-		on_power_destroy(event)
-		on_circuit_network_destroy(event)
-	end
-
-	script.on_event(defines.events.on_built_entity, on_any_build)
-	script.on_event(defines.events.on_robot_built_entity, on_any_build)
-	script.on_event(defines.events.script_raised_built, on_any_build)
-	script.on_event(defines.events.script_raised_revive, on_any_build)
-	script.on_event(defines.events.on_player_mined_entity, on_any_destroy)
-	script.on_event(defines.events.on_robot_mined_entity, on_any_destroy)
-	script.on_event(defines.events.on_entity_died, on_any_destroy)
-	script.on_event(defines.events.script_raised_destroy, on_any_destroy)
+	script.on_event(defines.events.on_built_entity, guarded_build)
+	script.on_event(defines.events.on_robot_built_entity, guarded_build)
+	script.on_event(defines.events.script_raised_built, guarded_build)
+	script.on_event(defines.events.script_raised_revive, guarded_build)
+	script.on_event(defines.events.on_player_mined_entity, guarded_destroy)
+	script.on_event(defines.events.on_robot_mined_entity, guarded_destroy)
+	script.on_event(defines.events.on_entity_died, guarded_destroy)
+	script.on_event(defines.events.script_raised_destroy, guarded_destroy)
 
 	if defines.events.on_space_platform_built_entity ~= nil then
-		script.on_event(defines.events.on_space_platform_built_entity, on_any_build)
-		script.on_event(defines.events.on_space_platform_mined_entity, on_any_destroy)
+		script.on_event(defines.events.on_space_platform_built_entity, guarded_build)
+		script.on_event(defines.events.on_space_platform_mined_entity, guarded_destroy)
 	end
 end
 

@@ -1,0 +1,8 @@
+{
+  "name": "bench-builder",
+  "version": "1.0.0",
+  "title": "Benchmark World Builder",
+  "author": "Furoon",
+  "factorio_version": "2.1",
+  "dependencies": ["base >= 2.1.0"]
+}

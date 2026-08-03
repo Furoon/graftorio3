@@ -7,7 +7,7 @@
 --- Iterates the filtered surface set for seeds/pollution and game.forces for production/evolution/logistics,
 --- and delegates to sub-module tick handlers for power, circuit networks, and research.
 --- @param event NthTickEventData
-function register_events(event)
+function collect_core(event)
 	gauge_tick:set(game.tick)
 
 	-- Build the filtered surface set once per cycle and reuse it everywhere below.
@@ -88,6 +88,8 @@ function register_events(event)
 				for _, stat in pairs(evolution) do
 					gauge_evolution:set(stat[1], { force.name, stat[2], surface.name })
 				end
+
+				gauge_rockets_launched:set(force.rockets_launched, { force.name })
 
 				-- LuaForce.items_launched is a dictionary<string, uint> in current
 				-- 2.x, not an array of ItemWithQualityCounts. ipairs() over a
@@ -200,16 +202,29 @@ function register_events(event)
 		end
 	end
 
-	-- power tick handler
-	on_power_tick(event)
+end
 
-	-- circuit network tick handler
-	on_circuit_network_tick(event)
+--- Serialize all metrics and write the .prom file. Also updates the exporter
+--- self-metrics: series/byte counts describe the PREVIOUS cycle's output
+--- (one-cycle lag avoids collecting twice per write).
+--- @param event NthTickEventData
+function write_metrics(event)
+	gauge_exporter_last_collection_tick:set(game.tick)
+	local out = prometheus.collect()
+
+	local series = 0
+	for line in out:gmatch("[^\n]+") do
+		if line:sub(1, 1) ~= "#" then
+			series = series + 1
+		end
+	end
+	gauge_exporter_series:set(series)
+	gauge_exporter_output_bytes:set(#out)
 
 	if server_save then
-		helpers.write_file("graftorio3/game.prom", prometheus.collect(), false, 0)
+		helpers.write_file("graftorio3/game.prom", out, false, 0)
 	else
-		helpers.write_file("graftorio3/game.prom", prometheus.collect(), false)
+		helpers.write_file("graftorio3/game.prom", out, false)
 	end
 end
 

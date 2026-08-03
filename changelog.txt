@@ -9,6 +9,13 @@ Date: 2026-08-03
     - New startup setting "Surface allowlist": restrict collection to named surfaces.
     - New startup setting "Include space platforms" (default off): space platforms are
       separate surfaces and multiply per-surface work and label cardinality.
+  Minor Features:
+    - New metric factorio_rockets_launched (per force).
+    - Exporter self-metrics: factorio_exporter_series, factorio_exporter_output_bytes
+      (previous cycle), factorio_exporter_last_collection_tick.
+    - Collector resilience: every collection stage runs isolated; a failing stage
+      increments factorio_collector_errors_total{module} and logs once instead of
+      stopping the game. The metrics file is still written when a stage fails.
   Changes:
     - Renamed metric factorio_platform_count to factorio_platforms: the _count
       suffix is reserved for histogram/summary series by Prometheus convention
