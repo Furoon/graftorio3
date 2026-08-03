@@ -56,11 +56,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: factorio-headless.tar.xz
-          key: factorio-headless-stable-v1
+          key: factorio-headless-latest-v1
 
       - name: Download Factorio headless
         if: steps.cache-factorio.outputs.cache-hit != 'true'
-        run: curl -sL -o factorio-headless.tar.xz "https://factorio.com/get-download/stable/headless/linux64"
+        run: curl -sL -o factorio-headless.tar.xz "https://factorio.com/get-download/latest/headless/linux64"
 
       - name: Smoke test (--create with mod loaded)
         run: |
