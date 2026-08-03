@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  lint-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: luacheck
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q luacheck
+          # exit 1 = warnings (legacy cross-module globals, tolerated),
+          # exit >= 2 = syntax/IO errors (blocking)
+          luacheck . --exclude-files 'prometheus/**' 'node_modules/**' 'dist/**' || test $? -lt 2
+
+      - name: Package dry-run (allowlist)
+        run: ./scripts/package.sh
+
+      - name: Forbidden-content gate on the zip
+        run: |
+          ZIP=$(ls dist/*.zip)
+          echo "Pruefe $ZIP"
+          if unzip -l "$ZIP" | grep -Ei 'docker|grafana|compose|Justfile|node_modules|config/|data/|\.github'; then
+            echo "::error::Dev-Infrastruktur im Mod-Zip gefunden"
+            exit 1
+          fi
+          echo "Zip ist sauber"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mod-zip
+          path: dist/*.zip
+          retention-days: 14
+
+  headless-smoke:
+    runs-on: ubuntu-latest
+    needs: lint-and-package
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: mod-zip
+          path: dist
+
+      - name: Cache Factorio headless
+        id: cache-factorio
+        uses: actions/cache@v4
+        with:
+          path: factorio-headless.tar.xz
+          key: factorio-headless-stable-v1
+
+      - name: Download Factorio headless
+        if: steps.cache-factorio.outputs.cache-hit != 'true'
+        run: curl -sL -o factorio-headless.tar.xz "https://factorio.com/get-download/stable/headless/linux64"
+
+      - name: Smoke test (--create with mod loaded)
+        run: |
+          tar -xJf factorio-headless.tar.xz
+          mkdir -p factorio/mods
+          cp dist/*.zip factorio/mods/
+          NAME=$(python3 -c "import json;print(json.load(open('info.json'))['name'])")
+          printf '{"mods":[{"name":"base","enabled":true},{"name":"%s","enabled":true}]}' "$NAME" > factorio/mods/mod-list.json
+          ./factorio/bin/x64/factorio --create /tmp/smoke.zip 2>&1 | tee smoke.log
+          if grep -E "^\s+[0-9.]+ Error" smoke.log; then
+            echo "::error::Fehler beim Laden der Mod im Headless"
+            exit 1
+          fi
+          grep -q "Checksum of $NAME" smoke.log && echo "Mod wurde geladen"

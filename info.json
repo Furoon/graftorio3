@@ -1,10 +1,10 @@
 {
-  "name": "graftorio2-geo",
+  "name": "graftorio3",
   "version": "1.1.0",
-  "title": "graftorio2 - Geo's version",
-  "author": "Geostyx",
-  "description": "Visualize metrics from your factorio game in grafana",
-  "homepage": "https://github.com/jahands/graftorio2",
+  "title": "graftorio3",
+  "author": "Furoon",
+  "description": "Export Factorio server metrics in native Prometheus text format for the node_exporter textfile collector. Factorio 2.1 port of graftorio2 with surface filtering and dedicated-server fixes.",
+  "homepage": "https://github.com/Furoon/graftorio3",
   "dependencies": [
     "base >= 2.1.0",
     "? YARM >= 0.8.207"
@@ -16,28 +16,5 @@
   "spoiling_required": false,
   "freezing_required": false,
   "segmented_units_required": false,
-  "expansion_shaders_required": false,
-  "package": {
-    "ignore": [
-      ".github/**",
-      ".gitattributes",
-      ".gitignore",
-      ".luacheckrc",
-      ".luarc.json",
-      ".mise.toml",
-      ".releaserc",
-      ".vscode/**",
-      "bun.lock",
-      "config/**",
-      "CONTRIBUTING.md",
-      "data/**",
-      "docker-compose*.yml",
-      "Justfile",
-      "Metrics.md",
-      "node_modules/**",
-      "package.json",
-      "pkg/**",
-      "prometheus/**"
-    ]
-  }
+  "expansion_shaders_required": false
 }

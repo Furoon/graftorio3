@@ -1,35 +1,56 @@
 name: Release
 
-permissions: 
-  contents: write 
-  issues: write 
-  pull-requests: write 
-  statuses: write 
-
 on:
   push:
-    branches:
-      - main
+    tags: ["v*"]
 
 jobs:
   release:
-    name: release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-      - name: Install Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.3.10
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-      - name: Run semantic-release
-        run: npx semantic-release
+      - uses: actions/checkout@v4
+
+      - name: Version guard (tag == info.json == changelog)
+        run: ./scripts/check_release.sh "${GITHUB_REF_NAME}"
+
+      - name: Package
+        run: ./scripts/package.sh
+
+      - name: Forbidden-content gate on the zip
+        run: |
+          ZIP=$(ls dist/*.zip)
+          if unzip -l "$ZIP" | grep -Ei 'docker|grafana|compose|Justfile|node_modules|config/|data/|\.github'; then
+            echo "::error::Dev-Infrastruktur im Mod-Zip gefunden"
+            exit 1
+          fi
+
+      - name: Headless smoke test
+        run: |
+          curl -sL -o factorio-headless.tar.xz "https://factorio.com/get-download/stable/headless/linux64"
+          tar -xJf factorio-headless.tar.xz
+          mkdir -p factorio/mods
+          cp dist/*.zip factorio/mods/
+          NAME=$(python3 -c "import json;print(json.load(open('info.json'))['name'])")
+          printf '{"mods":[{"name":"base","enabled":true},{"name":"%s","enabled":true}]}' "$NAME" > factorio/mods/mod-list.json
+          ./factorio/bin/x64/factorio --create /tmp/smoke.zip 2>&1 | tee smoke.log
+          ! grep -E "^\s+[0-9.]+ Error" smoke.log
+
+      - name: Upload to mod portal
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FACTORIO_TOKEN: ${{ secrets.FACTORIO_TOKEN }}
+          FACTORIO_API_KEY: ${{ secrets.FACTORIO_API_KEY }}
+        run: |
+          NAME=$(python3 -c "import json;print(json.load(open('info.json'))['name'])")
+          ./scripts/publish.sh "$NAME" "$(ls dist/*.zip)"
+
+      - name: Extract changelog for release notes
+        run: |
+          awk '/^Version:/{n++} n==1' changelog.txt > release-notes.txt
+          head -3 release-notes.txt
+
+      - name: GitHub release with zip asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          body_path: release-notes.txt
