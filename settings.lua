@@ -56,7 +56,7 @@ data:extend({
 		type = "string-setting",
 		setting_type = "startup",
 		name = "graftorio3-entity-count-types",
-		default_value = "assembling-machine,electric-pole,transport-belt,roboport,unit-spawner",
+		default_value = "assembling-machine,electric-pole,transport-belt,roboport,unit-spawner,entity-ghost",
 		allow_blank = true,
 		order = "c-entity-count-types",
 	},
@@ -66,5 +66,23 @@ data:extend({
 		name = "graftorio3-collect-player-metrics",
 		default_value = false,
 		order = "d-collect-player-metrics",
+	},
+})
+
+data:extend({
+	{
+		type = "string-setting",
+		setting_type = "startup",
+		name = "graftorio3-instance-label",
+		default_value = "",
+		allow_blank = true,
+		order = "e-instance-label",
+	},
+	{
+		type = "string-setting",
+		setting_type = "startup",
+		name = "graftorio3-output-filename",
+		default_value = "game.prom",
+		order = "f-output-filename",
 	},
 })

@@ -17,9 +17,11 @@ jobs:
           # luacheck is not in the Ubuntu 24.04 repos; install via luarocks
           sudo apt-get install -y -q lua5.1 luarocks
           sudo luarocks install luacheck
-          # exit 1 = warnings (legacy cross-module globals, tolerated),
-          # exit >= 2 = syntax/IO errors (blocking)
-          luacheck . --exclude-files 'prometheus/**' 'node_modules/**' 'dist/**' || test $? -lt 2
+          # zero-warning policy since 1.3.0 (.luacheckrc declares all globals)
+          luacheck .
+
+      - name: Metrics.md drift check
+        run: python3 scripts/gen_metrics.py --check
 
       - name: Package dry-run (allowlist)
         run: ./scripts/package.sh

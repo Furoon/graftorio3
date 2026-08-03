@@ -208,7 +208,7 @@ end
 --- self-metrics: series/byte counts describe the PREVIOUS cycle's output
 --- (one-cycle lag avoids collecting twice per write).
 --- @param event NthTickEventData
-function write_metrics(event)
+function write_metrics(_event)
 	gauge_exporter_last_collection_tick:set(game.tick)
 	local out = prometheus.collect()
 
@@ -221,16 +221,21 @@ function write_metrics(event)
 	gauge_exporter_series:set(series)
 	gauge_exporter_output_bytes:set(#out)
 
+	if instance_label ~= "" then
+		out = apply_instance_label(out, instance_label)
+	end
+
+	local path = "graftorio3/" .. output_filename
 	if server_save then
-		helpers.write_file("graftorio3/game.prom", out, false, 0)
+		helpers.write_file(path, out, false, 0)
 	else
-		helpers.write_file("graftorio3/game.prom", out, false)
+		helpers.write_file(path, out, false)
 	end
 end
 
 --- Handle player join/leave/kick/ban/remove events. Updates connected and total player count gauges.
 --- @param event EventData.on_player_joined_game|EventData.on_player_left_game|EventData.on_player_removed|EventData.on_player_kicked|EventData.on_player_banned
-function register_events_players(event)
+function register_events_players(_event)
 	gauge_connected_player_count:set(#game.connected_players)
 	gauge_total_player_count:set(#game.players)
 end
