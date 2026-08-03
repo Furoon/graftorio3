@@ -14,7 +14,9 @@ jobs:
       - name: luacheck
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q luacheck
+          # luacheck is not in the Ubuntu 24.04 repos; install via luarocks
+          sudo apt-get install -y -q lua5.1 luarocks
+          sudo luarocks install luacheck
           # exit 1 = warnings (legacy cross-module globals, tolerated),
           # exit >= 2 = syntax/IO errors (blocking)
           luacheck . --exclude-files 'prometheus/**' 'node_modules/**' 'dist/**' || test $? -lt 2
