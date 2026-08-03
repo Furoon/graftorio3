@@ -9,20 +9,20 @@ require("research")
 require("circuit-network")
 
 --- @type number[] Parsed histogram bucket boundaries for train metrics
-bucket_settings = train_buckets(settings.startup["graftorio2-train-histogram-buckets"].value --[[@as string]])
+bucket_settings = train_buckets(settings.startup["graftorio3-train-histogram-buckets"].value --[[@as string]])
 
 --- @type integer Number of ticks between metric collection cycles
-nth_tick = settings.startup["graftorio2-nth-tick"].value --[[@as integer]]
+nth_tick = settings.startup["graftorio3-nth-tick"].value --[[@as integer]]
 
 --- @type boolean Whether to write the .prom file in server-save mode (player 0)
-server_save = settings.startup["graftorio2-server-save"].value --[[@as boolean]]
+server_save = settings.startup["graftorio3-server-save"].value --[[@as boolean]]
 
 --- @type boolean Whether train statistics collection is disabled
-disable_train_stats = settings.startup["graftorio2-disable-train-stats"].value --[[@as boolean]]
+disable_train_stats = settings.startup["graftorio3-disable-train-stats"].value --[[@as boolean]]
 
 -- Surface filtering (2.1 port). Parsed once at load; startup settings cannot change at runtime.
-surface_allowlist = parse_surface_filter(settings.startup["graftorio2-surface-filter"].value --[[@as string]])
-include_platforms = settings.startup["graftorio2-include-platforms"].value --[[@as boolean]]
+surface_allowlist = parse_surface_filter(settings.startup["graftorio3-surface-filter"].value --[[@as string]])
+include_platforms = settings.startup["graftorio3-include-platforms"].value --[[@as boolean]]
 
 -- ============================================================================
 -- Gauge metrics (no labels)
@@ -218,7 +218,7 @@ gauge_power_production_output =
 -- ============================================================================
 
 --- @type Gauge
-gauge_platform_count = prometheus.gauge("factorio_platform_count", "number of space platforms", { "force" })
+gauge_platform_count = prometheus.gauge("factorio_platforms", "number of space platforms", { "force" })
 --- @type Gauge
 gauge_platform_state = prometheus.gauge("factorio_platform_state", "platform state (1=active)", { "force", "platform", "state" })
 --- @type Gauge

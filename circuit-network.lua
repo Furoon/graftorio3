@@ -14,17 +14,22 @@ local data = {
 }
 
 --- Perform a full rescan of all constant combinators across all surfaces and forces.
+--- Iterates game.forces directly: the previous game.players loop meant a dedicated
+--- server nobody had joined scanned nothing, permanently missing every combinator
+--- that existed at server start.
 local function rescan()
 	data.combinators = {}
-	for _, player in pairs(game.players) do
-		for _, surface in pairs(collected_surfaces()) do
-			for _, combinator in
-				pairs(surface.find_entities_filtered({
-					force = player.force,
-					type = "constant-combinator",
-				}))
-			do
-				data.combinators[combinator.unit_number] = combinator
+	for _, force in pairs(game.forces) do
+		if force.valid then
+			for _, surface in pairs(collected_surfaces()) do
+				for _, combinator in
+					pairs(surface.find_entities_filtered({
+						force = force,
+						type = "constant-combinator",
+					}))
+				do
+					data.combinators[combinator.unit_number] = combinator
+				end
 			end
 		end
 	end
@@ -35,7 +40,7 @@ end
 --- @param event EventData.on_built_entity|EventData.on_robot_built_entity|EventData.script_raised_built
 function on_circuit_network_build(event)
 	local entity = event.entity
-	if entity and entity.name == "constant-combinator" then
+	if entity and entity.type == "constant-combinator" then
 		if data.inited then
 			-- Incremental update: add single combinator instead of full rescan
 			data.combinators[entity.unit_number] = entity
@@ -50,7 +55,7 @@ end
 --- @param event EventData.on_player_mined_entity|EventData.on_robot_mined_entity|EventData.on_entity_died|EventData.script_raised_destroy
 function on_circuit_network_destroy(event)
 	local entity = event.entity
-	if entity and entity.name == "constant-combinator" then
+	if entity and entity.type == "constant-combinator" then
 		-- Incremental update: remove single combinator instead of full rescan
 		data.combinators[entity.unit_number] = nil
 	end
@@ -98,7 +103,9 @@ function on_circuit_network_tick(event)
 							{ combinator.force.name, combinator.surface.name, network_id }
 						)
 						for _, signal in ipairs(network.signals) do
-							local quality_name = signal.signal.quality and signal.signal.quality.name or "normal"
+							-- SignalID.quality is a prototype-name string in the 2.x API
+						local q = signal.signal.quality
+						local quality_name = (type(q) == "table" and q.name) or (type(q) == "string" and q) or "normal"
 							gauge_circuit_network_signal:set(signal.count, {
 								combinator.force.name,
 								combinator.surface.name,

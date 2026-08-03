@@ -1,32 +1,32 @@
 -- settings.lua
--- Mod startup settings for graftorio2
+-- Mod startup settings for graftorio3
 -- Runs in the data stage where `data:extend()` is the main API
 
 data:extend({
 	{
 		type = "string-setting",
-		name = "graftorio2-train-histogram-buckets",
+		name = "graftorio3-train-histogram-buckets",
 		setting_type = "startup",
 		default_value = "10,30,60,90,120,180,240,300,600",
 		allow_blank = false,
 	},
 	{
 		type = "int-setting",
-		name = "graftorio2-nth-tick",
+		name = "graftorio3-nth-tick",
 		setting_type = "startup",
 		default_value = 300,
 		allow_blank = false,
 	},
 	{
 		type = "bool-setting",
-		name = "graftorio2-server-save",
+		name = "graftorio3-server-save",
 		setting_type = "startup",
 		default_value = true,
 		allow_blank = false,
 	},
 	{
 		type = "bool-setting",
-		name = "graftorio2-disable-train-stats",
+		name = "graftorio3-disable-train-stats",
 		setting_type = "startup",
 		default_value = false,
 		allow_blank = false,
@@ -36,7 +36,7 @@ data:extend({
 data:extend({
 	{
 		type = "string-setting",
-		name = "graftorio2-surface-filter",
+		name = "graftorio3-surface-filter",
 		setting_type = "startup",
 		default_value = "",
 		allow_blank = true,
@@ -44,7 +44,7 @@ data:extend({
 	},
 	{
 		type = "bool-setting",
-		name = "graftorio2-include-platforms",
+		name = "graftorio3-include-platforms",
 		setting_type = "startup",
 		default_value = false,
 		order = "b-include-platforms",
