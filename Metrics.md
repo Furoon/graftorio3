@@ -116,3 +116,13 @@ The following metrics are only available if their respective mod is installed.
 | `factorio_yarm_site_amount`             | force<br/>name<br/>type | How much `type` remains in the site with name `name`                                      |
 | `factorio_yarm_site_ore_per_minute`     | force<br/>name<br/>type | How much `type` is mined at the site with name `name`                                     |
 | `factorio_yarm_site_remaining_permille` | force<br/>name<br/>type | How much `type` is remaining (in permille) compared to the starting amount of site `name` |
+
+## Exporter health (added in 1.1.0)
+
+| Metric | Labels | Description |
+| --- | --- | --- |
+| factorio_rockets_launched | force | Rockets launched per force |
+| factorio_collector_errors_total | module | Collector stages that raised an error (core, power, circuit-network, train, write) |
+| factorio_exporter_series | | Metric series written in the previous cycle |
+| factorio_exporter_output_bytes | | Bytes written in the previous cycle |
+| factorio_exporter_last_collection_tick | | Game tick of the last completed collection |
