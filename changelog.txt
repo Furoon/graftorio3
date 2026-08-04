@@ -21,6 +21,16 @@ Date: 2026-08-03
       free of Lua errors and that promtool accepts the output. A negative
       control deliberately breaks one collector stage and requires the harness
       to fail -- a verification job that cannot fail proves nothing.
+    - New machine status aggregate: factorio_entity_status{surface,force,type,status}
+      counts machines by operational state (no_power, no_ingredients, full_output,
+      working, ...) -- the "factory is stalled, but where" metric. Configurable via
+      graftorio3-entity-status-types (default assembling-machine, furnace,
+      mining-drill, lab; empty disables it). Reading a status needs a real entity
+      object, so this is the most expensive collector: own time-sliced stage,
+      capped by graftorio3-entity-status-max-entities. Hitting the cap sets
+      factorio_entity_status_truncated to 1 and reports
+      factorio_entity_status_scanned instead of passing partial counts off as
+      complete.
     - Public remote interface: other mods can publish their own metrics through
       graftorio3 instead of shipping a second exporter. remote.call("graftorio3",
       "register_gauge"/"register_counter"/"set"/"inc"/"api_version"). Names are

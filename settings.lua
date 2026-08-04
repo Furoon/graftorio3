@@ -96,3 +96,23 @@ data:extend({
 		order = "g-time-slicing",
 	},
 })
+
+data:extend({
+	{
+		type = "string-setting",
+		setting_type = "startup",
+		name = "graftorio3-entity-status-types",
+		default_value = "assembling-machine,furnace,mining-drill,lab",
+		allow_blank = true,
+		order = "h-entity-status-types",
+	},
+	{
+		type = "int-setting",
+		setting_type = "startup",
+		name = "graftorio3-entity-status-max-entities",
+		default_value = 20000,
+		minimum_value = 100,
+		maximum_value = 1000000,
+		order = "i-entity-status-max",
+	},
+})
