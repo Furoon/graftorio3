@@ -20,7 +20,7 @@ jobs:
 
       - name: Forbidden-content gate on the zip
         run: |
-          ZIP=$(ls dist/*.zip)
+          ZIP=$(ls dist/*.zip | head -1)
           if unzip -l "$ZIP" | grep -Ei 'docker|grafana|compose|Justfile|node_modules|config/|data/|\.github'; then
             echo "::error::Dev-Infrastruktur im Mod-Zip gefunden"
             exit 1
@@ -31,18 +31,25 @@ jobs:
           curl -sL -o factorio-headless.tar.xz "https://factorio.com/get-download/latest/headless/linux64"
           tar -xJf factorio-headless.tar.xz
           mkdir -p factorio/mods
-          cp dist/*.zip factorio/mods/
+          cp "$(ls dist/*.zip | head -1)" factorio/mods/
           NAME=$(python3 -c "import json;print(json.load(open('info.json'))['name'])")
           printf '{"mods":[{"name":"base","enabled":true},{"name":"%s","enabled":true}]}' "$NAME" > factorio/mods/mod-list.json
           ./factorio/bin/x64/factorio --create /tmp/smoke.zip 2>&1 | tee smoke.log
           ! grep -E "^\s+[0-9.]+ Error" smoke.log
 
-      - name: Upload to mod portal
+      - name: Upload to mod portal (both game versions)
         env:
           FACTORIO_API_KEY: ${{ secrets.FACTORIO_API_KEY }}
         run: |
           NAME=$(python3 -c "import json;print(json.load(open('info.json'))['name'])")
-          ./scripts/publish.sh "$NAME" "$(ls dist/*.zip)"
+          # package.sh emits two zips: X.Y.Z for Factorio 2.1 and X.Y.(Z+1)
+          # with identical Lua for the 2.0 stable channel. The portal assigns
+          # one game version per mod version, so they must be separate
+          # releases. 2.1 first, so it stays the newest release there.
+          for zip in $(ls dist/*.zip | sort); do
+            echo "Uploading $zip"
+            ./scripts/publish.sh "$NAME" "$zip"
+          done
 
       - name: Extract changelog for release notes
         run: |

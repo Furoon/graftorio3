@@ -6,6 +6,24 @@
 --- Main nth-tick event handler. Collects all game metrics and writes the Prometheus export file.
 --- Iterates the filtered surface set for seeds/pollution and game.forces for production/evolution/logistics,
 --- and delegates to sub-module tick handlers for power, circuit networks, and research.
+--- Whether this Factorio build exposes quality-aware production statistics.
+--- input_quality_counts only exists from 2.1 onwards, and reading a missing
+--- field on a LuaObject raises rather than returning nil, so this is probed
+--- once with pcall and cached. Lets one code base serve both game versions.
+--- @type boolean?
+local quality_counts_supported = nil
+
+--- @param stats LuaFlowStatistics
+--- @return boolean
+local function supports_quality_counts(stats)
+	if quality_counts_supported == nil then
+		quality_counts_supported = pcall(function()
+			return stats.input_quality_counts
+		end)
+	end
+	return quality_counts_supported
+end
+
 --- @param event NthTickEventData
 function collect_core(event)
 	gauge_tick:set(game.tick)
@@ -59,7 +77,7 @@ function collect_core(event)
 				-- build counts do not. Item statistics are therefore handled
 				-- separately from the rest.
 				local item_stats = force.get_item_production_statistics(surface)
-				if production_quality_labels then
+				if production_quality_labels and supports_quality_counts(item_stats) then
 					-- input_quality_counts is nested quality -> item -> count.
 					for quality_name, items in pairs(item_stats.input_quality_counts) do
 						for name, n in pairs(items) do
