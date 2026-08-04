@@ -40,6 +40,8 @@ output_filename = sanitize_output_filename(settings.startup["graftorio3-output-f
 time_slicing = settings.startup["graftorio3-time-slicing"].value --[[@as boolean]]
 entity_status_types = parse_entity_count_types(settings.startup["graftorio3-entity-status-types"].value --[[@as string]])
 entity_status_max_entities = settings.startup["graftorio3-entity-status-max-entities"].value --[[@as integer]]
+train_include_id = settings.startup["graftorio3-train-include-id"].value --[[@as boolean]]
+train_max_series = settings.startup["graftorio3-train-max-series"].value --[[@as integer]]
 
 -- ============================================================================
 -- Gauge metrics (no labels)
@@ -256,6 +258,13 @@ gauge_entity_status_scanned = prometheus.gauge("factorio_entity_status_scanned",
 	"entities inspected during the last status scan")
 gauge_entity_status_truncated = prometheus.gauge("factorio_entity_status_truncated",
 	"whether the last status scan hit the entity cap (1=truncated)")
+
+-- Train tracking health (train.lua)
+gauge_train_tracked = prometheus.gauge("factorio_train_tracked", "trains with active trip tracking")
+gauge_train_gc_removed = prometheus.gauge("factorio_train_gc_removed",
+	"stale train entries removed by the last garbage collection")
+gauge_train_series_truncated = prometheus.gauge("factorio_train_series_truncated",
+	"whether the train series budget is exhausted (1=truncated)")
 counter_player_deaths = prometheus.counter("factorio_player_deaths_total", "player deaths", { "player" })
 counter_player_kills = prometheus.counter("factorio_player_kills_total", "entities killed by a player", { "player" })
 --- @type Gauge
@@ -343,6 +352,7 @@ collection_stages = {
 	{ name = "environment", fn = function(e) return collect_environment(e) end },
 	{ name = "counters", fn = function(e) return collect_counters(e) end },
 	{ name = "entity-status", fn = function(e) return collect_entity_status(e) end },
+	{ name = "train-gc", fn = function(e) return collect_train_gc(e) end },
 	{ name = "write", fn = function(e) return write_metrics(e) end },
 }
 

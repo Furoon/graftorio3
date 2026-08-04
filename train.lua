@@ -27,11 +27,17 @@ function train_buckets(bucket_settings)
 	return train_buckets
 end
 
---- @type table<uint, TrainTrip> Active trip data per train ID
-local train_trips = {}
+-- Trip and arrival state lives in `storage`, not in module locals. As module
+-- locals it was silently reset on every save/load: trips in flight were lost
+-- and the `seen` table grew without bound because dead trains were never
+-- removed. Both are fixed here.
 
---- @type table<string, StationArrival> Arrival tracking per station name
-local arrivals = {}
+--- Ensure the storage tables exist. Cheap enough to call from every handler.
+local function ensure_storage()
+	storage.train_trips = storage.train_trips or {}
+	storage.train_arrivals = storage.train_arrivals or {}
+	storage.train_seen = storage.train_seen or {}
+end
 
 --- @type uint Train ID to watch for debug output (0 = disabled)
 local watched_train = 0
@@ -66,7 +72,7 @@ local function create_train(event)
 	end
 
 	--- @type TrainTrip
-	train_trips[event.train.id] = {
+	storage.train_trips[event.train.id] = {
 		source = event.train.path_end_stop.backer_name,
 		departure_tick = game.tick,
 		wait_start_tick = 0,
@@ -83,7 +89,7 @@ local function create_station(event)
 	end
 
 	--- @type StationArrival
-	arrivals[event.train.path_end_stop.backer_name] = { last_arrival_tick = 0 }
+	storage.train_arrivals[event.train.path_end_stop.backer_name] = { last_arrival_tick = 0 }
 	-- watch_station(event, "created station " .. event.train.path_end_stop.backer_name)
 end
 
@@ -95,7 +101,7 @@ local function reset_train(event)
 	end
 
 	--- @type TrainTrip
-	train_trips[event.train.id] = {
+	storage.train_trips[event.train.id] = {
 		source = event.train.path_end_stop.backer_name,
 		departure_tick = game.tick,
 		wait_start_tick = 0,
@@ -103,8 +109,7 @@ local function reset_train(event)
 	}
 end
 
---- @type table<uint, table<string, table<string, uint>>> Nested map: train_id -> from_station -> to_station -> tick
-local seen = {}
+
 
 --- Track direct loop times (round-trip between two stations).
 --- @param event EventData.on_train_changed_state
@@ -115,16 +120,16 @@ local function direct_loop(_event, _duration, labels)
 	local to = labels[2]
 	local train_id = labels[3]
 
-	if seen[train_id] == nil then
-		seen[train_id] = {}
+	if storage.train_seen[train_id] == nil then
+		storage.train_seen[train_id] = {}
 	end
 
-	if seen[train_id][from] == nil then
-		seen[train_id][from] = {}
+	if storage.train_seen[train_id][from] == nil then
+		storage.train_seen[train_id][from] = {}
 	end
 
-	if seen[train_id][from][to] then
-		local total = (game.tick - seen[train_id][from][to]) / TICKS_PER_SECOND
+	if storage.train_seen[train_id][from][to] then
+		local total = (game.tick - storage.train_seen[train_id][from][to]) / TICKS_PER_SECOND
 
 		--- @type string[]
 		local sorted = { from, to }
@@ -137,11 +142,11 @@ local function direct_loop(_event, _duration, labels)
 	end
 
 	-- Lap timing (disabled debug output); kept for reference:
-	-- if seen[train_id][to] and seen[train_id][to][from] then
-	-- 	watch_train(event, from .. ":" .. to .. " lap " .. (game.tick - seen[train_id][to][from]) / TICKS_PER_SECOND)
+	-- if storage.train_seen[train_id][to] and storage.train_seen[train_id][to][from] then
+	-- 	watch_train(event, from .. ":" .. to .. " lap " .. (game.tick - storage.train_seen[train_id][to][from]) / TICKS_PER_SECOND)
 	-- end
 
-	seen[train_id][from][to] = game.tick
+	storage.train_seen[train_id][from][to] = game.tick
 end
 
 --- Track time between consecutive arrivals at the same station.
@@ -151,13 +156,13 @@ local function track_arrival(event)
 		return
 	end
 
-	if arrivals[event.train.path_end_stop.backer_name] == nil then
+	if storage.train_arrivals[event.train.path_end_stop.backer_name] == nil then
 		create_station(event)
 	end
 
 	-- watch_station(event, "arrived at " .. event.train.path_end_stop.backer_name)
-	if arrivals[event.train.path_end_stop.backer_name].last_arrival_tick ~= 0 then
-		local time_since_last_arrival = (game.tick - arrivals[event.train.path_end_stop.backer_name].last_arrival_tick) / TICKS_PER_SECOND
+	if storage.train_arrivals[event.train.path_end_stop.backer_name].last_arrival_tick ~= 0 then
+		local time_since_last_arrival = (game.tick - storage.train_arrivals[event.train.path_end_stop.backer_name].last_arrival_tick) / TICKS_PER_SECOND
 		local labels = { event.train.path_end_stop.backer_name }
 
 		gauge_train_arrival_time:set(time_since_last_arrival, labels)
@@ -166,7 +171,74 @@ local function track_arrival(event)
 		-- watch_station(event, "time_since_last_arrival was " .. time_since_last_arrival)
 	end
 
-	arrivals[event.train.path_end_stop.backer_name].last_arrival_tick = game.tick
+	storage.train_arrivals[event.train.path_end_stop.backer_name].last_arrival_tick = game.tick
+end
+
+--- Build the label set for trip metrics. The train ID is the worst
+--- cardinality offender in the whole mod -- one series per train per station
+--- pair -- so it is collapsed to a constant unless explicitly enabled. The
+--- label itself stays in the schema so dashboards keep working either way.
+--- @param from string
+--- @param to string
+--- @param train_id uint
+--- @return string[]
+local function trip_labels(from, to, train_id)
+	return { from, to, train_include_id and tostring(train_id) or "all" }
+end
+
+--- Check whether a new label combination may still be tracked. Returns false
+--- once the configured series budget is exhausted, so a runaway station
+--- naming scheme degrades into missing new series instead of an unbounded
+--- Prometheus cardinality explosion.
+--- @param key string
+--- @return boolean
+local function may_track(key)
+	ensure_storage()
+	storage.train_series = storage.train_series or {}
+	if storage.train_series[key] then
+		return true
+	end
+	local count = 0
+	for _ in pairs(storage.train_series) do
+		count = count + 1
+	end
+	if count >= train_max_series then
+		gauge_train_series_truncated:set(1)
+		return false
+	end
+	storage.train_series[key] = true
+	gauge_train_series_truncated:set(0)
+	return true
+end
+
+--- Remove state for trains that no longer exist. Trains get new IDs when
+--- they are rebuilt or recoupled, so without this the seen/trip tables grow
+--- for the lifetime of the save -- a slow leak on long-running servers.
+--- @param event NthTickEventData
+--- @return nil
+function collect_train_gc(_event)
+	ensure_storage()
+	local alive = {}
+	for _, train in pairs(game.train_manager.get_trains({})) do
+		if train.valid then
+			alive[train.id] = true
+		end
+	end
+	local removed = 0
+	for train_id in pairs(storage.train_trips) do
+		if not alive[train_id] then
+			storage.train_trips[train_id] = nil
+			removed = removed + 1
+		end
+	end
+	for train_id in pairs(storage.train_seen) do
+		if not alive[train_id] then
+			storage.train_seen[train_id] = nil
+			removed = removed + 1
+		end
+	end
+	gauge_train_tracked:set(table_size(storage.train_trips))
+	gauge_train_gc_removed:set(removed)
 end
 
 --- Main train state change handler. Registered as an event callback from control.lua.
@@ -177,27 +249,33 @@ function register_events_train(event)
 		return
 	end
 
+	ensure_storage()
+
 	if event.train.state == defines.train_state.arrive_station then
 		track_arrival(event)
 	end
 
-	if train_trips[event.train.id] ~= nil then
+	if storage.train_trips[event.train.id] ~= nil then
 		if event.train.state == defines.train_state.arrive_station then
 			if event.train.path_end_stop == nil then
 				return
 			end
 
-			if train_trips[event.train.id].source == event.train.path_end_stop.backer_name then
+			if storage.train_trips[event.train.id].source == event.train.path_end_stop.backer_name then
 				return
 			end
 
-			local trip = train_trips[event.train.id]
+			local trip = storage.train_trips[event.train.id]
 			local duration = (game.tick - trip.departure_tick) / TICKS_PER_SECOND
 			local wait = trip.total_wait_ticks / TICKS_PER_SECOND
 
 			-- watch_train(event, event.train.id .. ": " .. trip.source .. "->" .. event.train.path_end_stop.backer_name .. " took " .. duration .. "s waited " .. wait .. "s")
 
-			local labels = { trip.source, event.train.path_end_stop.backer_name, event.train.id }
+			local labels = trip_labels(trip.source, event.train.path_end_stop.backer_name, event.train.id)
+			if not may_track("trip\0" .. labels[1] .. "\0" .. labels[2] .. "\0" .. labels[3]) then
+				reset_train(event)
+				return
+			end
 
 			gauge_train_trip_time:set(duration, labels)
 			gauge_train_wait_time:set(wait, labels)
@@ -211,22 +289,22 @@ function register_events_train(event)
 			and event.old_state == defines.train_state.wait_station
 		then
 			-- begin moving after waiting at a station
-			train_trips[event.train.id].departure_tick = game.tick
+			storage.train_trips[event.train.id].departure_tick = game.tick
 		-- watch_train(event, event.train.id .. " leaving for " .. event.train.path_end_stop.backer_name)
 		elseif event.train.state == defines.train_state.wait_signal then
 			-- waiting at a signal
-			train_trips[event.train.id].wait_start_tick = game.tick
+			storage.train_trips[event.train.id].wait_start_tick = game.tick
 		-- watch_train(event, event.train.id .. " waiting")
 		elseif event.old_state == defines.train_state.wait_signal then
 			-- begin moving after waiting at a signal
-			train_trips[event.train.id].total_wait_ticks = train_trips[event.train.id].total_wait_ticks
-				+ (game.tick - train_trips[event.train.id].wait_start_tick)
-			-- watch_train(event, event.train.id .. " waited for " .. (game.tick - train_trips[event.train.id].wait_start_tick) / TICKS_PER_SECOND)
-			train_trips[event.train.id].wait_start_tick = 0
+			storage.train_trips[event.train.id].total_wait_ticks = storage.train_trips[event.train.id].total_wait_ticks
+				+ (game.tick - storage.train_trips[event.train.id].wait_start_tick)
+			-- watch_train(event, event.train.id .. " waited for " .. (game.tick - storage.train_trips[event.train.id].wait_start_tick) / TICKS_PER_SECOND)
+			storage.train_trips[event.train.id].wait_start_tick = 0
 		end
 	end
 
-	if train_trips[event.train.id] == nil and event.train.state == defines.train_state.arrive_station then
+	if storage.train_trips[event.train.id] == nil and event.train.state == defines.train_state.arrive_station then
 		create_train(event)
 	end
 end

@@ -21,6 +21,20 @@ Date: 2026-08-03
       free of Lua errors and that promtool accepts the output. A negative
       control deliberately breaks one collector stage and requires the harness
       to fail -- a verification job that cannot fail proves nothing.
+    - Train statistics rewritten (v2):
+        * Trip, arrival and loop state moved from module locals into storage.
+          Previously every save/load silently reset it: trips in flight were
+          lost and the seen table grew for the lifetime of the save, because
+          trains that no longer exist were never removed.
+        * New garbage collection stage prunes state for vanished trains,
+          reported as factorio_train_tracked and factorio_train_gc_removed.
+        * The train ID label is the largest series source (one per train per
+          station pair) and is collapsed to the constant "all" unless
+          graftorio3-train-include-id is enabled; the label stays in the
+          schema so dashboards keep working either way.
+        * graftorio3-train-max-series caps distinct label combinations; once
+          exhausted, new ones are dropped and factorio_train_series_truncated
+          is set to 1.
     - German locale (locale/de), covering every setting.
     - docs/: deployment guide (node_exporter textfile collector, containers,
       multi-instance hosts, Ansible fragment), ready-made Prometheus recording
