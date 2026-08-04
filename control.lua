@@ -42,6 +42,7 @@ entity_status_types = parse_entity_count_types(settings.startup["graftorio3-enti
 entity_status_max_entities = settings.startup["graftorio3-entity-status-max-entities"].value --[[@as integer]]
 train_include_id = settings.startup["graftorio3-train-include-id"].value --[[@as boolean]]
 train_max_series = settings.startup["graftorio3-train-max-series"].value --[[@as integer]]
+production_quality_labels = settings.startup["graftorio3-production-quality-labels"].value --[[@as boolean]]
 
 -- ============================================================================
 -- Gauge metrics (no labels)
@@ -64,10 +65,11 @@ gauge_seed = prometheus.gauge("factorio_seed", "seed", { "surface" })
 gauge_mods = prometheus.gauge("factorio_mods", "mods", { "name", "version" })
 
 --- @type Gauge
-gauge_item_production_input = prometheus.gauge("factorio_item_production_input", "items produced", { "force", "name", "surface" })
+gauge_item_production_input =
+	prometheus.gauge("factorio_item_production_input", "items produced", { "force", "name", "surface", "quality" })
 --- @type Gauge
 gauge_item_production_output =
-	prometheus.gauge("factorio_item_production_output", "items consumed", { "force", "name", "surface" })
+	prometheus.gauge("factorio_item_production_output", "items consumed", { "force", "name", "surface", "quality" })
 
 --- @type Gauge
 gauge_fluid_production_input =

@@ -55,9 +55,35 @@ function collect_core(event)
 	for _, force in pairs(game.forces) do
 		if force.valid then
 			for _, surface in pairs(surfaces) do
+				-- Item production carries a quality dimension; fluids, kills and
+				-- build counts do not. Item statistics are therefore handled
+				-- separately from the rest.
+				local item_stats = force.get_item_production_statistics(surface)
+				if production_quality_labels then
+					-- input_quality_counts is nested quality -> item -> count.
+					for quality_name, items in pairs(item_stats.input_quality_counts) do
+						for name, n in pairs(items) do
+							gauge_item_production_input:set(n, { force.name, name, surface.name, quality_name })
+						end
+					end
+					for quality_name, items in pairs(item_stats.output_quality_counts) do
+						for name, n in pairs(items) do
+							gauge_item_production_output:set(n, { force.name, name, surface.name, quality_name })
+						end
+					end
+				else
+					-- Quality collapsed into one series per item, labelled "all",
+					-- so the label schema stays identical either way.
+					for name, n in pairs(item_stats.input_counts) do
+						gauge_item_production_input:set(n, { force.name, name, surface.name, "all" })
+					end
+					for name, n in pairs(item_stats.output_counts) do
+						gauge_item_production_output:set(n, { force.name, name, surface.name, "all" })
+					end
+				end
+
 				--- @type {[1]: LuaFlowStatistics, [2]: Gauge, [3]: Gauge}[]
 				local stats = {
-					{ force.get_item_production_statistics(surface), gauge_item_production_input, gauge_item_production_output },
 					{ force.get_fluid_production_statistics(surface), gauge_fluid_production_input, gauge_fluid_production_output },
 					{ force.get_kill_count_statistics(surface), gauge_kill_count_input, gauge_kill_count_output },
 					{
