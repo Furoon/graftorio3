@@ -135,3 +135,13 @@ data:extend({
 		order = "k-train-max-series",
 	},
 })
+
+data:extend({
+	{
+		type = "bool-setting",
+		setting_type = "startup",
+		name = "graftorio3-production-quality-labels",
+		default_value = false,
+		order = "l-production-quality-labels",
+	},
+})

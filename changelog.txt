@@ -1,4 +1,19 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.4.0
+Date: 2026-08-04
+  Minor Features:
+    - Item production and consumption can now be split by quality tier
+      (graftorio3-production-quality-labels, off by default), using the
+      input_quality_counts / output_quality_counts statistics.
+  Changes:
+    - factorio_item_production_input and factorio_item_production_output gained
+      a "quality" label. With the setting off it carries the constant value
+      "all", so there is still one series per item and aggregations such as
+      sum by (name) are unaffected -- but queries that match on an exact label
+      set need the extra label. Fluid, kill and build statistics are unchanged:
+      they have no quality dimension.
+
+---------------------------------------------------------------------------------------------------
 Version: 1.3.0
 Date: 2026-08-04
   Minor Features:

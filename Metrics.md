@@ -9,8 +9,8 @@ Generated from control.lua by scripts/gen_metrics.py -- do not edit by hand.
 | factorio_total_player_count | gauge |  | total registered players |
 | factorio_seed | gauge | surface | seed |
 | factorio_mods | gauge | name, version | mods |
-| factorio_item_production_input | gauge | force, name, surface | items produced |
-| factorio_item_production_output | gauge | force, name, surface | items consumed |
+| factorio_item_production_input | gauge | force, name, surface, quality | items produced |
+| factorio_item_production_output | gauge | force, name, surface, quality | items consumed |
 | factorio_fluid_production_input | gauge | force, name, surface | fluids produced |
 | factorio_fluid_production_output | gauge | force, name, surface | fluids consumed |
 | factorio_kill_count_input | gauge | force, name, surface | kills |

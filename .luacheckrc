@@ -143,6 +143,7 @@ globals = {
   "output_filename",
   "parse_entity_count_types",
   "parse_surface_filter",
+  "production_quality_labels",
   "prometheus",
   "register_diagnostics_command",
   "register_events_players",
