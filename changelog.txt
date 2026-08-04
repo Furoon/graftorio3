@@ -15,6 +15,13 @@ Date: 2026-08-03
       across server restarts rather than resetting each session.
     - New opt-in counters factorio_player_deaths_total and
       factorio_player_kills_total (behind graftorio3-collect-player-metrics).
+    - Collection is now spread across ticks (graftorio3-time-slicing, on by
+      default): one stage per tick slice instead of all stages at once. A full
+      cycle still completes every "Scheduler timer" ticks, but the periodic
+      spike drops sharply -- measured on a 5-surface benchmark map: max tick
+      time 17.67 ms -> 6.70 ms at an unchanged average (0.117 -> 0.113 ms).
+      Values within one file are then observed up to one cycle apart; turn the
+      setting off if every series must be sampled in the same tick.
     - New /graftorio3 console command: last collection tick, output path,
       interval, collected surfaces, active settings and per-module collector
       error counts. Answers "nothing arrives in Prometheus" without log diving.

@@ -35,6 +35,7 @@ collect_player_metrics = settings.startup["graftorio3-collect-player-metrics"].v
 -- configurable output filename so several servers can share one textfile dir.
 instance_label = settings.startup["graftorio3-instance-label"].value --[[@as string]]
 output_filename = sanitize_output_filename(settings.startup["graftorio3-output-filename"].value --[[@as string]])
+time_slicing = settings.startup["graftorio3-time-slicing"].value --[[@as boolean]]
 
 -- ============================================================================
 -- Gauge metrics (no labels)
@@ -320,13 +321,39 @@ end
 
 --- nth-tick dispatcher: every stage runs guarded, the write always happens.
 --- @param event NthTickEventData
+--- Collection stages in execution order. The final stage serializes and
+--- writes the file, so it must stay last.
+--- @type { name: string, fn: fun(event: any) }[]
+collection_stages = {
+	{ name = "core", fn = function(e) return collect_core(e) end },
+	{ name = "power", fn = function(e) return on_power_tick(e) end },
+	{ name = "circuit-network", fn = function(e) return on_circuit_network_tick(e) end },
+	{ name = "environment", fn = function(e) return collect_environment(e) end },
+	{ name = "counters", fn = function(e) return collect_counters(e) end },
+	{ name = "write", fn = function(e) return write_metrics(e) end },
+}
+
+--- Run every stage in one tick. Used when time slicing is disabled.
+--- @param event NthTickEventData
 function guarded_nth_tick(event)
-	guarded("core", collect_core, event)
-	guarded("power", on_power_tick, event)
-	guarded("circuit-network", on_circuit_network_tick, event)
-	guarded("environment", collect_environment, event)
-	guarded("counters", collect_counters, event)
-	guarded("write", write_metrics, event)
+	for _, stage in ipairs(collection_stages) do
+		guarded(stage.name, stage.fn, event)
+	end
+end
+
+--- Run one stage per invocation, cycling through the list. Called every
+--- nth_tick/#stages ticks, so a full cycle still completes every nth_tick
+--- ticks while the per-tick cost drops to roughly one stage.
+---
+--- Trade-off: values within one written file are observed up to nth_tick
+--- ticks apart rather than all in the same tick. For rates sampled at
+--- Prometheus scrape intervals that skew is irrelevant; it is the reason
+--- the behaviour can be switched off.
+--- @param event NthTickEventData
+function sliced_nth_tick(event)
+	storage.slice_index = ((storage.slice_index or 0) % #collection_stages) + 1
+	local stage = collection_stages[storage.slice_index]
+	guarded(stage.name, stage.fn, event)
 end
 
 --- Guarded wrappers for the high-frequency entity event handlers: power and
@@ -348,7 +375,13 @@ end
 
 local function register_all_events()
 	register_diagnostics_command()
-	script.on_nth_tick(nth_tick, guarded_nth_tick)
+	if time_slicing then
+		-- One stage per invocation; a full cycle still spans nth_tick ticks.
+		local period = math.max(1, math.floor(nth_tick / #collection_stages))
+		script.on_nth_tick(period, sliced_nth_tick)
+	else
+		script.on_nth_tick(nth_tick, guarded_nth_tick)
+	end
 
 	script.on_event(defines.events.on_player_joined_game, register_events_players)
 	script.on_event(defines.events.on_player_left_game, register_events_players)
