@@ -153,7 +153,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "factorio_items_launched_total{force=~\"${Force}\",name=~\"${Cargo}\"}",
+          "expr": "factorio_items_launched{force=~\"${Force}\",name=~\"${Cargo}\"}",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -263,7 +263,7 @@
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "factorio_items_launched_total{force=~\"${Force}\",name=\"${Cargo}\"}",
+              "expr": "factorio_items_launched{force=~\"${Force}\",name=\"${Cargo}\"}",
               "format": "time_series",
               "hide": false,
               "instant": false,
@@ -303,7 +303,7 @@
         "datasource": {
           "type": "prometheus"
         },
-        "definition": "label_values({__name__=~\"factorio_items_launched_total\"},force)",
+        "definition": "label_values({__name__=~\"factorio_items_launched\"},force)",
         "description": "Force",
         "hide": 0,
         "includeAll": true,
@@ -312,7 +312,7 @@
         "name": "Force",
         "options": [],
         "query": {
-          "query": "label_values({__name__=~\"factorio_items_launched_total\"},force)",
+          "query": "label_values({__name__=~\"factorio_items_launched\"},force)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -334,7 +334,7 @@
         "datasource": {
           "type": "prometheus"
         },
-        "definition": "label_values({__name__=~\"factorio_items_launched_total\"},name)",
+        "definition": "label_values({__name__=~\"factorio_items_launched\"},name)",
         "description": "Cargo",
         "hide": 0,
         "includeAll": true,
@@ -343,7 +343,7 @@
         "name": "Cargo",
         "options": [],
         "query": {
-          "query": "label_values({__name__=~\"factorio_items_launched_total\"},name)",
+          "query": "label_values({__name__=~\"factorio_items_launched\"},name)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,

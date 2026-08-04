@@ -1115,7 +1115,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "factorio_items_launched_total",
+          "expr": "factorio_items_launched",
           "legendFormat": "{{name}} ({{quality}})",
           "refId": "A"
         }
