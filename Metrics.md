@@ -39,6 +39,14 @@ Generated from control.lua by scripts/gen_metrics.py -- do not edit by hand.
 | factorio_logistic_network_available_logistic_robots | gauge | force, surface, network | the number of logistic robots available for a job |
 | factorio_logistic_network_robot_limit | gauge | force, surface, network | the maximum number of robots the network can work with |
 | factorio_logistic_network_items | gauge | force, surface, network, name, quality | the number of items in a logistic network |
+| factorio_accumulator_charge_joules | gauge | surface, network | stored energy in accumulators |
+| factorio_accumulator_capacity_joules | gauge | surface, network | total accumulator buffer size |
+| factorio_generation_capacity_watts | gauge | surface, network | installed maximum generation capacity |
+| factorio_logistic_storage_items | gauge | force, surface, network, name, quality | items sitting in storage chests |
+| factorio_logistic_provider_items | gauge | force, surface, network, name, quality | items available in provider chests |
+| factorio_rocket_silo_parts | gauge | surface, force, silo | rocket parts built in this silo |
+| factorio_rocket_silo_status | gauge | surface, force, silo | rocket silo status enum value |
+| factorio_depth_scanned | gauge |  | entities inspected during the last depth scan |
 | factorio_circuit_network_signal | gauge | force, surface, network, name, quality | the value of a signal in a circuit network |
 | factorio_circuit_network_monitored | gauge | force, surface, network | whether a circuit network with given ID is being monitored |
 | factorio_power_production_input | gauge | force, name, network, surface | power produced |

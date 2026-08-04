@@ -33,6 +33,7 @@ ALLOWLIST=(
   diagnostics.lua
   ext.lua
   entity_status.lua
+  depth.lua
   settings.lua
   locale
   prometheus
