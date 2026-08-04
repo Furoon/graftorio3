@@ -22,6 +22,22 @@ Date: 2026-08-04
           of outstanding requests, so this reports storage versus providers
           instead of pretending to measure demand.
         * factorio_rocket_silo_parts and factorio_rocket_silo_status per silo.
+    - Dual publishing for both Factorio channels. The stable channel is still
+      2.0 while the mod targets 2.1, and factorio_version gates in both
+      directions, so stable-channel servers could not install it at all.
+      package.sh now emits a second zip, X.Y.(Z+1), with identical Lua and
+      factorio_version 2.0, and the release workflow publishes both. The
+      portal assigns exactly one game version per mod version -- verified
+      against flib, helmod and even-distribution, none of which has a
+      duplicate version number -- so a second version number is the only way
+      to serve both.
+    - Quality-aware production counts are now feature-probed at runtime.
+      input_quality_counts does not exist before 2.1, and reading a missing
+      field on a LuaObject raises rather than returning nil, so with the
+      setting enabled on 2.0 the collector would have failed. It now falls
+      back to the aggregate counts and quality="all". Verified on a real
+      2.0.77 headless with the setting forced on: production still reported,
+      no collector errors, promtool clean.
     - Vendored Prometheus library documented in prometheus/PROVENANCE.md: it
       comes from tarantool/metrics (BSD 2-Clause), arrived by inheritance
       through the fork chain and has been modified since, so it is a fork

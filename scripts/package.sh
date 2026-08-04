@@ -57,6 +57,41 @@ if find "$STAGE" \( -name 'docker-compose*' -o -name 'Justfile' -o -name '*.json
 fi
 
 ( cd "$DIST" && zip -qr "${NAME}_${VERSION}.zip" "${NAME}_${VERSION}" )
+
+# Second build for the Factorio 2.0 stable channel.
+#
+# factorio_version gates in both directions: a 2.1 zip refuses to load on 2.0
+# and vice versa. The mod portal also assigns exactly one game version per mod
+# version, so the same version number cannot serve both -- verified against
+# flib, helmod and even-distribution, none of which has a duplicate version.
+#
+# Convention: X.Y.Z targets Factorio 2.1, X.Y.(Z+1) is the identical Lua
+# published for 2.0. The portal serves each player the newest release matching
+# their game. The Lua really is identical: the only 2.1-exclusive API
+# (quality-aware production counts) is probed at runtime and falls back.
+if [ "${SKIP_LEGACY_BUILD:-0}" != "1" ]; then
+  LEGACY_VERSION=$(python3 -c "
+import sys
+major, minor, patch = '${VERSION}'.split('.')
+print(f'{major}.{minor}.{int(patch) + 1}')
+")
+  LEGACY_STAGE="$DIST/${NAME}_${LEGACY_VERSION}"
+  cp -r "$STAGE" "$LEGACY_STAGE"
+  python3 - "$LEGACY_STAGE/info.json" "$LEGACY_VERSION" <<'PYEOF'
+import json, sys
+path, version = sys.argv[1], sys.argv[2]
+info = json.load(open(path))
+info["version"] = version
+info["factorio_version"] = "2.0"
+info["dependencies"] = [d.replace("base >= 2.1.0", "base >= 2.0.0")
+                        for d in info.get("dependencies", [])]
+json.dump(info, open(path, "w"), indent=2)
+PYEOF
+  ( cd "$DIST" && zip -qr "${NAME}_${LEGACY_VERSION}.zip" "${NAME}_${LEGACY_VERSION}" )
+  rm -rf "$LEGACY_STAGE"
+  echo "OK: dist/${NAME}_${LEGACY_VERSION}.zip (Factorio 2.0)"
+fi
+
 rm -rf "$STAGE"
 echo "OK: dist/${NAME}_${VERSION}.zip"
 unzip -l "$DIST/${NAME}_${VERSION}.zip" | tail -3
