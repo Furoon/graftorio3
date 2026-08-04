@@ -64,6 +64,30 @@ it is part of the mod zip.
 
 See [Metrics.md](Metrics.md) for the full list of exported metric families.
 
+## Publishing metrics from your own mod
+
+Other mods can expose their metrics through graftorio3 rather than shipping
+a second exporter. Register in both `on_init` and `on_load` (prometheus state
+is rebuilt on every load), then set values from any handler:
+
+```lua
+local function register()
+  if not remote.interfaces["graftorio3"] then return end
+  remote.call("graftorio3", "register_gauge",
+    "mymod_widgets", "widgets produced", { "surface" })
+end
+script.on_init(register)
+script.on_load(register)
+
+script.on_nth_tick(300, function()
+  remote.call("graftorio3", "set", "mymod_widgets", 42, { "nauvis" })
+end)
+```
+
+Names are validated and namespaced to `factorio_*`, registration is
+idempotent, and every call returns `ok, error_message`. `register_counter`
+and `inc` exist for counters; `api_version` allows feature detection.
+
 ## Fork lineage
 
 This is a fork, standing on a lot of prior work:

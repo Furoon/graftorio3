@@ -31,6 +31,7 @@ ALLOWLIST=(
   env.lua
   counters.lua
   diagnostics.lua
+  ext.lua
   settings.lua
   locale
   prometheus

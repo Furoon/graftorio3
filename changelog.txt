@@ -15,6 +15,12 @@ Date: 2026-08-03
       across server restarts rather than resetting each session.
     - New opt-in counters factorio_player_deaths_total and
       factorio_player_kills_total (behind graftorio3-collect-player-metrics).
+    - Public remote interface: other mods can publish their own metrics through
+      graftorio3 instead of shipping a second exporter. remote.call("graftorio3",
+      "register_gauge"/"register_counter"/"set"/"inc"/"api_version"). Names are
+      validated and namespaced to factorio_*, registration is idempotent so it
+      can be repeated in on_load, every call returns ok plus an error message,
+      and the number of external metrics is capped.
     - Collection is now spread across ticks (graftorio3-time-slicing, on by
       default): one stage per tick slice instead of all stages at once. A full
       cycle still completes every "Scheduler timer" ticks, but the periodic
