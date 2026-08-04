@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.3.0
-Date: 2026-08-03
+Date: 2026-08-04
   Minor Features:
     - Multi-server support: new startup settings graftorio3-instance-label
       (adds instance="..." to every series) and graftorio3-output-filename
