@@ -47,6 +47,9 @@ Generated from control.lua by scripts/gen_metrics.py -- do not edit by hand.
 | factorio_rocket_silo_parts | gauge | surface, force, silo | rocket parts built in this silo |
 | factorio_rocket_silo_status | gauge | surface, force, silo | rocket silo status enum value |
 | factorio_depth_scanned | gauge |  | entities inspected during the last depth scan |
+| factorio_platform_hub_items | gauge | force, platform, name, quality | items in a space platform hub |
+| factorio_platform_asteroid_chunks | gauge | force, platform | asteroid chunks currently around the platform |
+| factorio_platform_paused | gauge | force, platform | whether the platform is paused (1=paused) |
 | factorio_circuit_network_signal | gauge | force, surface, network, name, quality | the value of a signal in a circuit network |
 | factorio_circuit_network_monitored | gauge | force, surface, network | whether a circuit network with given ID is being monitored |
 | factorio_power_production_input | gauge | force, name, network, surface | power produced |

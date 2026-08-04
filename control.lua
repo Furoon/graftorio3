@@ -224,6 +224,12 @@ gauge_rocket_silo_status = prometheus.gauge("factorio_rocket_silo_status",
 	"rocket silo status enum value", { "surface", "force", "silo" })
 gauge_depth_scanned = prometheus.gauge("factorio_depth_scanned",
 	"entities inspected during the last depth scan")
+gauge_platform_hub_items = prometheus.gauge("factorio_platform_hub_items",
+	"items in a space platform hub", { "force", "platform", "name", "quality" })
+gauge_platform_asteroid_chunks = prometheus.gauge("factorio_platform_asteroid_chunks",
+	"asteroid chunks currently around the platform", { "force", "platform" })
+gauge_platform_paused = prometheus.gauge("factorio_platform_paused",
+	"whether the platform is paused (1=paused)", { "force", "platform" })
 
 -- ============================================================================
 -- Circuit network metrics

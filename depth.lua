@@ -104,6 +104,53 @@ local function collect_rocket_silos(scanned)
 	return scanned
 end
 
+--- Space platform interior: hub stock, asteroid chunks in flight, pause state.
+--- The base collector reports a platform's state, weight, speed and distance;
+--- none of that says whether it is actually carrying anything or whether its
+--- asteroid intake has dried up.
+---
+--- Guarded per platform: platform APIs are the newest part of the runtime and
+--- a single odd platform should not take the stage down.
+--- @return nil
+local function collect_platform_depth()
+	gauge_platform_hub_items:reset()
+	gauge_platform_asteroid_chunks:reset()
+	gauge_platform_paused:reset()
+
+	for _, force in pairs(game.forces) do
+		if force.valid then
+			for _, platform in pairs(force.platforms or {}) do
+				if platform.valid then
+					local labels = { force.name, platform.name }
+					pcall(function()
+						gauge_platform_paused:set(platform.paused and 1 or 0, labels)
+					end)
+
+					pcall(function()
+						local hub = platform.hub
+						if hub and hub.valid then
+							local inventory = hub.get_inventory(defines.inventory.hub_main)
+							if inventory then
+								-- get_contents returns {name, quality, count} records.
+								for _, entry in pairs(inventory.get_contents()) do
+									gauge_platform_hub_items:set(entry.count, {
+										force.name, platform.name, entry.name, entry.quality or "normal",
+									})
+								end
+							end
+						end
+					end)
+
+					pcall(function()
+						local chunks = platform.find_asteroid_chunks_filtered({})
+						gauge_platform_asteroid_chunks:set(#chunks, labels)
+					end)
+				end
+			end
+		end
+	end
+end
+
 --- Entry point for the guarded dispatcher.
 --- @param event NthTickEventData
 --- @return nil
@@ -116,5 +163,6 @@ function collect_depth(_event)
 	scanned = collect_power_depth(scanned)
 	collect_logistic_depth()
 	scanned = collect_rocket_silos(scanned)
+	collect_platform_depth()
 	gauge_depth_scanned:set(scanned)
 end
