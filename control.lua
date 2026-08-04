@@ -10,6 +10,7 @@ require("circuit-network")
 require("env")
 require("counters")
 require("diagnostics")
+require("ext")
 
 --- @type number[] Parsed histogram bucket boundaries for train metrics
 bucket_settings = train_buckets(settings.startup["graftorio3-train-histogram-buckets"].value --[[@as string]])
