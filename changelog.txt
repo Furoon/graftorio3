@@ -5,6 +5,11 @@ Date: 2026-08-04
     - Item production and consumption can now be split by quality tier
       (graftorio3-production-quality-labels, off by default), using the
       input_quality_counts / output_quality_counts statistics.
+    - New Grafana dashboard "0.0 - graftorio3 Overview" covering exporter
+      health, machine status, electric network reserves, production rates,
+      logistic stock and rocket silos on one page, with a surface selector.
+      The inherited dashboards still describe the graftorio2 metric set; this
+      one is the entry point for everything added since.
     - New depth metrics (graftorio3-depth-metrics, on by default):
         * factorio_accumulator_charge_joules and
           factorio_accumulator_capacity_joules per electric network: current
