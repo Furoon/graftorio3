@@ -11,6 +11,7 @@ require("env")
 require("counters")
 require("diagnostics")
 require("ext")
+require("entity_status")
 
 --- @type number[] Parsed histogram bucket boundaries for train metrics
 bucket_settings = train_buckets(settings.startup["graftorio3-train-histogram-buckets"].value --[[@as string]])
@@ -37,6 +38,8 @@ collect_player_metrics = settings.startup["graftorio3-collect-player-metrics"].v
 instance_label = settings.startup["graftorio3-instance-label"].value --[[@as string]]
 output_filename = sanitize_output_filename(settings.startup["graftorio3-output-filename"].value --[[@as string]])
 time_slicing = settings.startup["graftorio3-time-slicing"].value --[[@as boolean]]
+entity_status_types = parse_entity_count_types(settings.startup["graftorio3-entity-status-types"].value --[[@as string]])
+entity_status_max_entities = settings.startup["graftorio3-entity-status-max-entities"].value --[[@as integer]]
 
 -- ============================================================================
 -- Gauge metrics (no labels)
@@ -245,6 +248,14 @@ gauge_surface_pollution = prometheus.gauge("factorio_surface_pollution", "total 
 
 -- Event counters (counters.lua): true counters for rate() queries
 counter_events = prometheus.counter("factorio_events_total", "game events observed since map creation", { "type" })
+
+-- Machine status aggregate (entity_status.lua)
+gauge_entity_status = prometheus.gauge("factorio_entity_status",
+	"machines by operational status", { "surface", "force", "type", "status" })
+gauge_entity_status_scanned = prometheus.gauge("factorio_entity_status_scanned",
+	"entities inspected during the last status scan")
+gauge_entity_status_truncated = prometheus.gauge("factorio_entity_status_truncated",
+	"whether the last status scan hit the entity cap (1=truncated)")
 counter_player_deaths = prometheus.counter("factorio_player_deaths_total", "player deaths", { "player" })
 counter_player_kills = prometheus.counter("factorio_player_kills_total", "entities killed by a player", { "player" })
 --- @type Gauge
@@ -331,6 +342,7 @@ collection_stages = {
 	{ name = "circuit-network", fn = function(e) return on_circuit_network_tick(e) end },
 	{ name = "environment", fn = function(e) return collect_environment(e) end },
 	{ name = "counters", fn = function(e) return collect_counters(e) end },
+	{ name = "entity-status", fn = function(e) return collect_entity_status(e) end },
 	{ name = "write", fn = function(e) return write_metrics(e) end },
 }
 
