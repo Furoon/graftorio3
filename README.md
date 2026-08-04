@@ -88,6 +88,16 @@ Names are validated and namespaced to `factorio_*`, registration is
 idempotent, and every call returns `ok, error_message`. `register_counter`
 and `inc` exist for counters; `api_version` allows feature detection.
 
+## Operations
+
+- [docs/deployment.md](docs/deployment.md) -- node_exporter textfile setup,
+  containers, several servers on one host, an Ansible fragment, and how to
+  check the pipeline with `/graftorio3`
+- [docs/recording-rules.yml](docs/recording-rules.yml) -- production rates and
+  a machines-working ratio, precomputed
+- [docs/alerts.yml](docs/alerts.yml) -- exporter staleness, collector errors,
+  paused server, machines without power
+
 ## Fork lineage
 
 This is a fork, standing on a lot of prior work:
