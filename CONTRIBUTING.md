@@ -74,6 +74,40 @@ version, then push a `vX.Y.Z` tag. The release workflow verifies that tag,
 `info.json` and the newest changelog entry agree, packages, smoke-tests,
 uploads to the mod portal and creates a GitHub release.
 
+## Base game and DLC compatibility
+
+**Every change must work on a base-game install, not just with Space Age.**
+
+The mod reads APIs that only carry meaning with the DLC -- space platforms,
+hub inventories, quality tiers. Without Space Age those must degrade to
+nothing rather than raising. This is easy to get wrong because a developer
+install almost always has the DLC enabled, which is exactly how it stayed
+unverified until CI started checking it.
+
+Two rules follow:
+
+1. **Never read a field that may not exist.** Reading a missing field on a
+   LuaObject *raises*; it does not return nil. Probe once with `pcall` and
+   cache the result, as `events.lua` does for `input_quality_counts`, or
+   guard the whole block, as `depth.lua` does per platform.
+2. **Iterate, do not assume.** `force.platforms` is simply empty without the
+   DLC, so looping over it is safe. Naming a prototype or an inventory define
+   that the DLC introduces is not.
+
+The same applies across game versions: the mod ships for both the Factorio
+2.0 stable channel and 2.1, from identical Lua. An API added in 2.1 must be
+feature-probed, not assumed. `prometheus/PROVENANCE.md` and the release
+section below describe how the two builds are produced.
+
+CI enforces both: the runtime verification job runs once with the full mod
+set and once with Space Age, quality and elevated rails disabled, and the
+release workflow smoke-tests the 2.0 build separately.
+
+Note when auditing the runtime API JSON: class entries list only their own
+members. Inherited ones -- `get_inventory` comes from `LuaControl`, not
+`LuaEntity` -- need the `parent` chain followed, or the audit produces false
+negatives.
+
 ## Adding a metric
 
 1. Define it in `control.lua` next to the related metrics.

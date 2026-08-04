@@ -175,6 +175,25 @@ jobs:
       - name: Runtime verification (metrics are actually produced)
         run: python3 tools/verify/verify.py ./factorio/bin/x64/factorio /tmp/verify.zip --promtool ./promtool
 
+      - name: Runtime verification without the Space Age DLC
+        run: |
+          # The mod uses APIs that only mean anything with Space Age
+          # (platforms, hub inventories) and quality-aware statistics. Both
+          # must degrade quietly on a base-game install rather than raising.
+          # Every earlier test ran with the DLC mods enabled, so this path
+          # was unverified until it was added here.
+          NAME=$(python3 -c "import json;print(json.load(open('info.json'))['name'])")
+          printf '{"mods":[{"name":"base","enabled":true},{"name":"space-age","enabled":false},{"name":"quality","enabled":false},{"name":"elevated-rails","enabled":false},{"name":"%s","enabled":true}]}' "$NAME" > factorio/mods/mod-list.json
+          rm -f factorio/mods/mod-settings.dat
+          ./factorio/bin/x64/factorio --create /tmp/verify-base.zip --map-gen-seed 1
+          python3 tools/verify/verify.py ./factorio/bin/x64/factorio /tmp/verify-base.zip --promtool ./promtool
+
+      - name: Restore the full mod set
+        run: |
+          NAME=$(python3 -c "import json;print(json.load(open('info.json'))['name'])")
+          printf '{"mods":[{"name":"base","enabled":true},{"name":"%s","enabled":true}]}' "$NAME" > factorio/mods/mod-list.json
+          rm -f factorio/mods/mod-settings.dat
+
       - name: Negative control (a broken stage must be detected)
         run: |
           # Sabotage one collector stage, rebuild, and require the harness to

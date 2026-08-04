@@ -22,6 +22,11 @@ Date: 2026-08-04
           of outstanding requests, so this reports storage versus providers
           instead of pretending to measure demand.
         * factorio_rocket_silo_parts and factorio_rocket_silo_status per silo.
+    - CI now verifies the mod on a base-game install with Space Age, quality
+      and elevated rails disabled, in addition to the full mod set. Every
+      earlier test ran with the DLC enabled, so base-game behaviour was
+      unverified; it passes, and is now a standing check rather than an
+      assumption.
     - Space platform depth (part of graftorio3-depth-metrics):
       factorio_platform_hub_items with quality, factorio_platform_asteroid_chunks
       and factorio_platform_paused. The base collector reports state, weight,
