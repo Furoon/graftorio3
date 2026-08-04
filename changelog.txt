@@ -22,6 +22,13 @@ Date: 2026-08-04
           of outstanding requests, so this reports storage versus providers
           instead of pretending to measure demand.
         * factorio_rocket_silo_parts and factorio_rocket_silo_status per silo.
+    - Space platform depth (part of graftorio3-depth-metrics):
+      factorio_platform_hub_items with quality, factorio_platform_asteroid_chunks
+      and factorio_platform_paused. The base collector reports state, weight,
+      speed and distance; none of that says whether a platform is carrying
+      anything or whether its asteroid intake has dried up. Collected per
+      platform inside pcall, since the platform APIs are the newest part of
+      the runtime.
     - Dual publishing for both Factorio channels. The stable channel is still
       2.0 while the mod targets 2.1, and factorio_version gates in both
       directions, so stable-channel servers could not install it at all.
