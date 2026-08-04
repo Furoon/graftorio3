@@ -145,3 +145,13 @@ data:extend({
 		order = "l-production-quality-labels",
 	},
 })
+
+data:extend({
+	{
+		type = "bool-setting",
+		setting_type = "startup",
+		name = "graftorio3-depth-metrics",
+		default_value = true,
+		order = "m-depth-metrics",
+	},
+})

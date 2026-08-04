@@ -12,6 +12,7 @@ require("counters")
 require("diagnostics")
 require("ext")
 require("entity_status")
+require("depth")
 
 --- @type number[] Parsed histogram bucket boundaries for train metrics
 bucket_settings = train_buckets(settings.startup["graftorio3-train-histogram-buckets"].value --[[@as string]])
@@ -43,6 +44,7 @@ entity_status_max_entities = settings.startup["graftorio3-entity-status-max-enti
 train_include_id = settings.startup["graftorio3-train-include-id"].value --[[@as boolean]]
 train_max_series = settings.startup["graftorio3-train-max-series"].value --[[@as integer]]
 production_quality_labels = settings.startup["graftorio3-production-quality-labels"].value --[[@as boolean]]
+depth_metrics = settings.startup["graftorio3-depth-metrics"].value --[[@as boolean]]
 
 -- ============================================================================
 -- Gauge metrics (no labels)
@@ -205,6 +207,24 @@ gauge_logistic_network_items = prometheus.gauge(
 	{ "force", "surface", "network", "name", "quality" }
 )
 
+-- Depth metrics (depth.lua)
+gauge_accumulator_charge = prometheus.gauge("factorio_accumulator_charge_joules",
+	"stored energy in accumulators", { "surface", "network" })
+gauge_accumulator_capacity = prometheus.gauge("factorio_accumulator_capacity_joules",
+	"total accumulator buffer size", { "surface", "network" })
+gauge_generation_capacity = prometheus.gauge("factorio_generation_capacity_watts",
+	"installed maximum generation capacity", { "surface", "network" })
+gauge_logistic_storage_items = prometheus.gauge("factorio_logistic_storage_items",
+	"items sitting in storage chests", { "force", "surface", "network", "name", "quality" })
+gauge_logistic_provider_items = prometheus.gauge("factorio_logistic_provider_items",
+	"items available in provider chests", { "force", "surface", "network", "name", "quality" })
+gauge_rocket_silo_parts = prometheus.gauge("factorio_rocket_silo_parts",
+	"rocket parts built in this silo", { "surface", "force", "silo" })
+gauge_rocket_silo_status = prometheus.gauge("factorio_rocket_silo_status",
+	"rocket silo status enum value", { "surface", "force", "silo" })
+gauge_depth_scanned = prometheus.gauge("factorio_depth_scanned",
+	"entities inspected during the last depth scan")
+
 -- ============================================================================
 -- Circuit network metrics
 -- ============================================================================
@@ -354,6 +374,7 @@ collection_stages = {
 	{ name = "environment", fn = function(e) return collect_environment(e) end },
 	{ name = "counters", fn = function(e) return collect_counters(e) end },
 	{ name = "entity-status", fn = function(e) return collect_entity_status(e) end },
+	{ name = "depth", fn = function(e) return collect_depth(e) end },
 	{ name = "train-gc", fn = function(e) return collect_train_gc(e) end },
 	{ name = "write", fn = function(e) return write_metrics(e) end },
 }
