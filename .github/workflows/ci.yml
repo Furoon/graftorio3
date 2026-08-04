@@ -28,7 +28,9 @@ jobs:
 
       - name: Forbidden-content gate on the zip
         run: |
-          ZIP=$(ls dist/*.zip)
+          # Two zips are produced (2.1 and the 2.0 channel build);
+          # gate the 2.1 one, the other differs only in info.json.
+          ZIP=$(ls dist/*.zip | sort | head -1)
           echo "Pruefe $ZIP"
           if unzip -l "$ZIP" | grep -Ei 'docker|grafana|compose|Justfile|node_modules|config/|data/|\.github'; then
             echo "::error::Dev-Infrastruktur im Mod-Zip gefunden"
@@ -68,7 +70,7 @@ jobs:
         run: |
           tar -xJf factorio-headless.tar.xz
           mkdir -p factorio/mods
-          cp dist/*.zip factorio/mods/
+          cp "$(ls dist/*.zip | sort | head -1)" factorio/mods/
           NAME=$(python3 -c "import json;print(json.load(open('info.json'))['name'])")
           printf '{"mods":[{"name":"base","enabled":true},{"name":"%s","enabled":true}]}' "$NAME" > factorio/mods/mod-list.json
           ./factorio/bin/x64/factorio --create /tmp/smoke.zip 2>&1 | tee smoke.log
@@ -117,7 +119,7 @@ jobs:
           }
           printf '{"mods":[{"name":"base","enabled":true},{"name":"bench-builder","enabled":false}]}' > factorio/mods/mod-list.json
           read BASE_AVG BASE_MAX <<< "$(run_bench)"
-          cp dist/*.zip factorio/mods/
+          cp "$(ls dist/*.zip | sort | head -1)" factorio/mods/
           NAME=$(python3 -c "import json;print(json.load(open('info.json'))['name'])")
           printf '{"mods":[{"name":"base","enabled":true},{"name":"bench-builder","enabled":false},{"name":"%s","enabled":true}]}' "$NAME" > factorio/mods/mod-list.json
           read MOD_AVG MOD_MAX <<< "$(run_bench)"
@@ -165,7 +167,7 @@ jobs:
         run: |
           tar -xJf factorio-headless.tar.xz
           mkdir -p factorio/mods
-          cp dist/*.zip factorio/mods/
+          cp "$(ls dist/*.zip | sort | head -1)" factorio/mods/
           NAME=$(python3 -c "import json;print(json.load(open('info.json'))['name'])")
           printf '{"mods":[{"name":"base","enabled":true},{"name":"%s","enabled":true}]}' "$NAME" > factorio/mods/mod-list.json
           ./factorio/bin/x64/factorio --create /tmp/verify.zip --map-gen-seed 1
@@ -188,7 +190,7 @@ jobs:
           ./scripts/package.sh
           cd "$GITHUB_WORKSPACE"
           rm -f factorio/mods/*.zip
-          cp /tmp/faultsrc/dist/*.zip factorio/mods/
+          cp "$(ls /tmp/faultsrc/dist/*.zip | sort | head -1)" factorio/mods/
           rm -f factorio/mods/mod-settings.dat
           if python3 tools/verify/verify.py ./factorio/bin/x64/factorio /tmp/verify.zip --promtool ./promtool; then
             echo "::error::Negativkontrolle: Harness meldet Erfolg trotz defekter Stage"
