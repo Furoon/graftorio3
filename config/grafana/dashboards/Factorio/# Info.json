@@ -1543,7 +1543,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "factorio_items_launched_total{name=\"satellite\"} or on() vector(0)",
+          "expr": "factorio_items_launched{name=\"satellite\"} or on() vector(0)",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -1621,7 +1621,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "rate(factorio_items_launched_total{name=\"satellite\"}[1h]) * ${TimeScale} or on() vector(0)",
+          "expr": "rate(factorio_items_launched{name=\"satellite\"}[1h]) * ${TimeScale} or on() vector(0)",
           "format": "time_series",
           "instant": false,
           "interval": "",
@@ -1689,7 +1689,7 @@
         "datasource": {
           "type": "prometheus"
         },
-        "definition": "label_values({__name__=~\"factorio_evolution|factorio_research_queue|factorio_items_launched_total\"},force)",
+        "definition": "label_values({__name__=~\"factorio_evolution|factorio_research_queue|factorio_items_launched\"},force)",
         "description": "Force",
         "hide": 0,
         "includeAll": true,
@@ -1698,7 +1698,7 @@
         "name": "Force",
         "options": [],
         "query": {
-          "query": "label_values({__name__=~\"factorio_evolution|factorio_research_queue|factorio_items_launched_total\"},force)",
+          "query": "label_values({__name__=~\"factorio_evolution|factorio_research_queue|factorio_items_launched\"},force)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
