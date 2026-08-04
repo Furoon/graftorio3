@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.4.0
+Version: 2.0.0
 Date: 2026-08-04
   Minor Features:
     - Item production and consumption can now be split by quality tier
@@ -22,6 +22,15 @@ Date: 2026-08-04
           of outstanding requests, so this reports storage versus providers
           instead of pretending to measure demand.
         * factorio_rocket_silo_parts and factorio_rocket_silo_status per silo.
+    - Vendored Prometheus library documented in prometheus/PROVENANCE.md: it
+      comes from tarantool/metrics (BSD 2-Clause), arrived by inheritance
+      through the fork chain and has been modified since, so it is a fork
+      rather than a pinned dependency.
+    - Removed the library's exported init(), which required
+      prometheus.tarantool-metrics -- a module that was never part of the
+      vendored subset, so any caller would have hit a load error. Being
+      exported made it reachable from mods using the remote interface.
+    - GitHub issue templates for bug reports and metric requests.
   Changes:
     - factorio_item_production_input and factorio_item_production_output gained
       a "quality" label. With the setting off it carries the constant value

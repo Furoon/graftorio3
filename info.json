@@ -1,6 +1,6 @@
 {
   "name": "graftorio3",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "title": "graftorio3",
   "author": "Furoon",
   "description": "Export Factorio server metrics in native Prometheus text format for the node_exporter textfile collector. Factorio 2.1 port of graftorio2 with surface filtering and dedicated-server fixes.",

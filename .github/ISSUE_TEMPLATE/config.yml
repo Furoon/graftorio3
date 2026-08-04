@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Setup help
+    url: https://github.com/Furoon/graftorio3/blob/master/docs/deployment.md
+    about: node_exporter wiring, containers, several servers on one host

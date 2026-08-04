@@ -1,0 +1,33 @@
+name: Metric request
+description: Propose a new metric or an additional label
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: What question should this metric answer?
+      description: >
+        Describe the operational question, not the implementation. "Which
+        machines are starved" is a better starting point than "expose
+        entity.status".
+    validations:
+      required: true
+  - type: input
+    id: api
+    attributes:
+      label: Which runtime API exposes it, if you know?
+      placeholder: "LuaEntity.status / LuaLogisticNetwork.get_contents"
+  - type: dropdown
+    id: cardinality
+    attributes:
+      label: Expected cardinality
+      description: >
+        Labels whose values are unbounded (player names, train IDs, station
+        names) usually need to sit behind a setting.
+      options:
+        - Bounded (a handful of values)
+        - Scales with surfaces or forces
+        - Scales with entities or names
+        - Not sure
+    validations:
+      required: true

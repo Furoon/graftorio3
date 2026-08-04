@@ -1,0 +1,42 @@
+name: Bug report
+description: Something is not working as documented
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: run `/graftorio3` in the server console. It reports the
+        mod version, when collection last ran, where it writes, which surfaces
+        it covers and any per-module collector errors. Pasting that output
+        answers most of the questions below at once.
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Output of /graftorio3
+      render: text
+    validations:
+      required: false
+  - type: input
+    id: versions
+    attributes:
+      label: graftorio3 and Factorio version
+      placeholder: "graftorio3 1.4.0, Factorio 2.1.12 headless"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Relevant lines from game.prom
+      description: From script-output/graftorio3/. A few lines are usually enough.
+      render: text
+  - type: textarea
+    id: settings
+    attributes:
+      label: Non-default mod settings
+      description: Especially surface filter, time slicing, depth metrics, entity status types.

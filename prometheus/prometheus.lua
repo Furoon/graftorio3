@@ -485,13 +485,6 @@ local function clear()
 	registry.callbacks = {}
 end
 
---- Initialize the registry with Tarantool-specific metrics (not used in Factorio context).
-local function init()
-	local registry = get_registry()
-	local tarantool_metrics = require("prometheus.tarantool-metrics")
-	registry:register_callback(tarantool_metrics.measure_tarantool_metrics)
-end
-
 --- @class PrometheusModule
 --- @field counter fun(name: string, help?: string, labels?: string[]): Counter
 --- @field gauge fun(name: string, help?: string, labels?: string[]): Gauge
@@ -499,7 +492,6 @@ end
 --- @field collect fun(): string
 --- @field collect_http fun(): {status: integer, headers: table<string, string>, body: string}
 --- @field clear fun()
---- @field init fun()
 
 --- @type PrometheusModule
 return {
@@ -509,5 +501,4 @@ return {
 	collect = collect,
 	collect_http = collect_http,
 	clear = clear,
-	init = init,
 }
