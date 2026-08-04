@@ -21,6 +21,17 @@ Date: 2026-08-03
       free of Lua errors and that promtool accepts the output. A negative
       control deliberately breaks one collector stage and requires the harness
       to fail -- a verification job that cannot fail proves nothing.
+    - German locale (locale/de), covering every setting.
+    - docs/: deployment guide (node_exporter textfile collector, containers,
+      multi-instance hosts, Ansible fragment), ready-made Prometheus recording
+      rules and Alertmanager rules for exporter staleness, collector errors and
+      a paused server.
+    - CONTRIBUTING.md rewritten for the actual toolchain; the stale bun/just
+      instructions and the leftover Justfile and docker-compose.dev.yml are gone.
+    - CI actions pinned to commit SHAs (kept at their current major versions
+      rather than jumping to latest) with a dependabot config to keep the pins
+      deliberate. The repository holds a portal API key, so a mutable tag in the
+      release workflow is a real supply-chain surface.
     - New machine status aggregate: factorio_entity_status{surface,force,type,status}
       counts machines by operational state (no_power, no_ingredients, full_output,
       working, ...) -- the "factory is stalled, but where" metric. Configurable via

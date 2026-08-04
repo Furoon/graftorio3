@@ -1,0 +1,53 @@
+# Alertmanager rules for graftorio3.
+#
+# These are deliberately about the exporter and the server, not about factory
+# design: a stalled assembler is a game problem, a stalled exporter is an
+# operations problem. Tune thresholds to your setup.
+groups:
+  - name: graftorio3-exporter
+    rules:
+      - alert: FactorioExporterStale
+        # last_collection_tick stops advancing when collection dies while the
+        # file keeps existing -- the failure mode a simple "up" check misses.
+        expr: changes(factorio_exporter_last_collection_tick[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "graftorio3 has not collected for 5 minutes"
+
+      - alert: FactorioCollectorErrors
+        expr: rate(factorio_collector_errors_total[10m]) > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "graftorio3 collector stage {{ $labels.module }} is failing"
+
+      - alert: FactorioEntityStatusTruncated
+        # Partial counts presented as complete would quietly corrupt dashboards.
+        expr: factorio_entity_status_truncated == 1
+        for: 15m
+        labels:
+          severity: info
+        annotations:
+          summary: "Machine status scan is hitting its entity cap"
+
+  - name: factorio-server
+    rules:
+      - alert: FactorioServerPaused
+        expr: factorio_tick_paused == 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Factorio server is paused"
+
+      - alert: FactorioNoPowerMachines
+        expr: |
+          sum by (surface) (factorio_entity_status{status="no_power"}) > 10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 10 machines without power on {{ $labels.surface }}"

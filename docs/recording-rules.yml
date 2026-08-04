@@ -1,0 +1,30 @@
+# Prometheus recording rules for graftorio3.
+#
+# The production metrics are cumulative totals exposed as gauges, so the
+# interesting quantity is almost always their rate. Precomputing it here keeps
+# dashboards simple and consistent.
+groups:
+  - name: graftorio3
+    interval: 30s
+    rules:
+      - record: factorio:item_production:rate1m
+        expr: rate(factorio_item_production_input[1m]) * 60
+
+      - record: factorio:item_consumption:rate1m
+        expr: rate(factorio_item_production_output[1m]) * 60
+
+      - record: factorio:fluid_production:rate1m
+        expr: rate(factorio_fluid_production_input[1m]) * 60
+
+      - record: factorio:pollution:rate1m
+        expr: rate(factorio_pollution_production_input[1m]) * 60
+
+      - record: factorio:rockets_launched:rate1h
+        expr: rate(factorio_rockets_launched[1h]) * 3600
+
+      # Share of machines actually working, per surface and type.
+      - record: factorio:machines_working:ratio
+        expr: |
+          sum by (surface, type) (factorio_entity_status{status="working"})
+          /
+          sum by (surface, type) (factorio_entity_status)

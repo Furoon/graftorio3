@@ -1,0 +1,10 @@
+# Keep the SHA-pinned GitHub Actions up to date. Pinning freezes behaviour;
+# dependabot makes sure the freeze is deliberate rather than forgotten.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"
