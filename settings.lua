@@ -86,3 +86,13 @@ data:extend({
 		order = "f-output-filename",
 	},
 })
+
+data:extend({
+	{
+		type = "bool-setting",
+		setting_type = "startup",
+		name = "graftorio3-time-slicing",
+		default_value = true,
+		order = "g-time-slicing",
+	},
+})

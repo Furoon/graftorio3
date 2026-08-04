@@ -23,7 +23,12 @@ local function build_report()
 	end
 
 	add("output: script-output/graftorio3/" .. output_filename)
-	add("interval: every " .. nth_tick .. " ticks")
+	if time_slicing then
+		add("interval: full cycle every " .. nth_tick .. " ticks (time sliced, "
+			.. #collection_stages .. " stages)")
+	else
+		add("interval: every " .. nth_tick .. " ticks (all stages in one tick)")
+	end
 
 	local surfaces = collected_surfaces()
 	local names = {}
