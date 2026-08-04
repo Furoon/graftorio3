@@ -116,3 +116,22 @@ data:extend({
 		order = "i-entity-status-max",
 	},
 })
+
+data:extend({
+	{
+		type = "bool-setting",
+		setting_type = "startup",
+		name = "graftorio3-train-include-id",
+		default_value = false,
+		order = "j-train-include-id",
+	},
+	{
+		type = "int-setting",
+		setting_type = "startup",
+		name = "graftorio3-train-max-series",
+		default_value = 500,
+		minimum_value = 10,
+		maximum_value = 100000,
+		order = "k-train-max-series",
+	},
+})

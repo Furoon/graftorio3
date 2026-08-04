@@ -33,6 +33,7 @@ globals = {
   "collect_entity_status",
   "collect_environment",
   "collect_player_metrics",
+  "collect_train_gc",
   "collected_surfaces",
   "collection_stages",
   "copper_side_network",
@@ -104,6 +105,9 @@ globals = {
   "gauge_total_player_count",
   "gauge_train_arrival_time",
   "gauge_train_direct_loop_time",
+  "gauge_train_gc_removed",
+  "gauge_train_series_truncated",
+  "gauge_train_tracked",
   "gauge_train_trip_time",
   "gauge_train_wait_time",
   "gauge_wind_orientation",
@@ -151,6 +155,8 @@ globals = {
   "surface_enabled",
   "time_slicing",
   "train_buckets",
+  "train_include_id",
+  "train_max_series",
   "write_metrics",
 }
 

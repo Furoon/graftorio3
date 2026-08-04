@@ -54,6 +54,9 @@ Generated from control.lua by scripts/gen_metrics.py -- do not edit by hand.
 | factorio_entity_status | gauge | surface, force, type, status | machines by operational status |
 | factorio_entity_status_scanned | gauge |  | entities inspected during the last status scan |
 | factorio_entity_status_truncated | gauge |  | whether the last status scan hit the entity cap (1=truncated) |
+| factorio_train_tracked | gauge |  | trains with active trip tracking |
+| factorio_train_gc_removed | gauge |  | stale train entries removed by the last garbage collection |
+| factorio_train_series_truncated | gauge |  | whether the train series budget is exhausted (1=truncated) |
 | factorio_player_deaths_total | counter | player | player deaths |
 | factorio_player_kills_total | counter | player | entities killed by a player |
 | factorio_platform_state | gauge | force, platform, state | platform state (1=active) |
