@@ -15,6 +15,12 @@ Date: 2026-08-03
       across server restarts rather than resetting each session.
     - New opt-in counters factorio_player_deaths_total and
       factorio_player_kills_total (behind graftorio3-collect-player-metrics).
+    - CI gained a runtime verification job (tools/verify/): it starts a real
+      headless server with the packaged zip, waits for a collection cycle and
+      asserts that every expected metric family is written, that the log is
+      free of Lua errors and that promtool accepts the output. A negative
+      control deliberately breaks one collector stage and requires the harness
+      to fail -- a verification job that cannot fail proves nothing.
     - Public remote interface: other mods can publish their own metrics through
       graftorio3 instead of shipping a second exporter. remote.call("graftorio3",
       "register_gauge"/"register_counter"/"set"/"inc"/"api_version"). Names are
