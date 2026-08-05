@@ -22,6 +22,19 @@ Date: 2026-08-04
           of outstanding requests, so this reports storage versus providers
           instead of pretending to measure demand.
         * factorio_rocket_silo_parts and factorio_rocket_silo_status per silo.
+    - Logistic demand: factorio_logistic_requested_items sums outstanding
+      requester filters, completing the supply/demand picture that the
+      storage-versus-providers split only half answered. get_supply_counts
+      takes one item at a time, so requester points are the workable route.
+      The same chest can appear more than once in requester_points, so points
+      are deduplicated per owning entity.
+    - factorio_logistic_robots: logistic robots, construction robots and
+      roboport cells per network.
+    - factorio_trains_manual and factorio_trains per surface. A train left in
+      manual mode is usually a forgotten train blocking a line.
+    - factorio_daytime per surface, which explains solar and accumulator
+      swings, and factorio_force_bonus{bonus} covering 17 research bonuses
+      and modifiers as plain attribute reads.
     - CI now verifies the mod on a base-game install with Space Age, quality
       and elevated rails disabled, in addition to the full mod set. Every
       earlier test ran with the DLC enabled, so base-game behaviour was

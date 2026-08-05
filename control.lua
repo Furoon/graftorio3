@@ -41,6 +41,7 @@ output_filename = sanitize_output_filename(settings.startup["graftorio3-output-f
 time_slicing = settings.startup["graftorio3-time-slicing"].value --[[@as boolean]]
 entity_status_types = parse_entity_count_types(settings.startup["graftorio3-entity-status-types"].value --[[@as string]])
 entity_status_max_entities = settings.startup["graftorio3-entity-status-max-entities"].value --[[@as integer]]
+depth_max_entities = entity_status_max_entities
 train_include_id = settings.startup["graftorio3-train-include-id"].value --[[@as boolean]]
 train_max_series = settings.startup["graftorio3-train-max-series"].value --[[@as integer]]
 production_quality_labels = settings.startup["graftorio3-production-quality-labels"].value --[[@as boolean]]
@@ -230,6 +231,18 @@ gauge_platform_asteroid_chunks = prometheus.gauge("factorio_platform_asteroid_ch
 	"asteroid chunks currently around the platform", { "force", "platform" })
 gauge_platform_paused = prometheus.gauge("factorio_platform_paused",
 	"whether the platform is paused (1=paused)", { "force", "platform" })
+gauge_logistic_requested_items = prometheus.gauge("factorio_logistic_requested_items",
+	"items requested but not yet delivered", { "force", "surface", "network", "name", "quality" })
+gauge_logistic_robots = prometheus.gauge("factorio_logistic_robots",
+	"robots and cells in a logistic network", { "force", "surface", "network", "kind" })
+gauge_trains_manual = prometheus.gauge("factorio_trains_manual",
+	"trains left in manual mode, usually forgotten trains blocking a line", { "surface" })
+gauge_trains_total = prometheus.gauge("factorio_trains",
+	"trains on the surface", { "surface" })
+gauge_daytime = prometheus.gauge("factorio_daytime",
+	"surface daytime (0-1), explains solar output swings", { "surface" })
+gauge_force_bonus = prometheus.gauge("factorio_force_bonus",
+	"force bonus or modifier value", { "force", "bonus" })
 
 -- ============================================================================
 -- Circuit network metrics

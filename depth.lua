@@ -104,6 +104,107 @@ local function collect_rocket_silos(scanned)
 	return scanned
 end
 
+--- Outstanding logistic requests, i.e. demand.
+--- get_supply_counts takes a single item, so there is no cheap whole-network
+--- view; demand is summed from requester point filters instead. That costs
+--- roughly one iteration per requester chest, which is why it lives in the
+--- depth stage and is capped.
+--- @param scanned integer
+--- @return integer scanned
+local function collect_logistic_demand(scanned)
+	gauge_logistic_requested_items:reset()
+	gauge_logistic_robots:reset()
+
+	for _, force in pairs(game.forces) do
+		if force.valid then
+			for _, surface in pairs(collected_surfaces()) do
+				local networks = force.logistic_networks[surface.name]
+				if networks then
+					for index, network in pairs(networks) do
+						if network.valid then
+							pcall(function()
+								gauge_logistic_robots:set(#network.logistic_robots,
+									{ force.name, surface.name, tostring(index), "logistic" })
+								gauge_logistic_robots:set(#network.construction_robots,
+									{ force.name, surface.name, tostring(index), "construction" })
+								gauge_logistic_robots:set(#network.cells,
+									{ force.name, surface.name, tostring(index), "cells" })
+							end)
+
+							local demand = {}
+							pcall(function()
+								-- The same chest can appear more than once in
+								-- requester_points -- observed twice, with
+								-- differing filter lists -- so summing every
+								-- point double-counts. Keep one point per
+								-- owning entity, the one listing most filters.
+								local best = {}
+								for _, point in pairs(network.requester_points) do
+									local owner = point.owner
+									local id = owner and owner.unit_number
+									if id then
+										local current = best[id]
+										if not current or #point.filters > #current.filters then
+											best[id] = point
+										end
+									end
+								end
+
+								for _, point in pairs(best) do
+									if scanned < depth_max_entities then
+										scanned = scanned + 1
+										for _, filter in pairs(point.filters) do
+											-- LogisticFilter is flat here:
+											-- name, quality, count, comparator.
+											if filter.name and filter.count then
+												local key = filter.name .. "\0" .. (filter.quality or "normal")
+												demand[key] = (demand[key] or 0) + filter.count
+											end
+										end
+									end
+								end
+							end)
+
+							for key, count in pairs(demand) do
+								local name, quality = key:match("^(.-)%z(.*)$")
+								gauge_logistic_requested_items:set(count, {
+									force.name, surface.name, tostring(index), name, quality,
+								})
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	return scanned
+end
+
+--- Trains in manual mode, per surface. A train left in manual on a server is
+--- usually a forgotten train blocking a line, which no other metric surfaces.
+--- @return nil
+local function collect_train_modes()
+	gauge_trains_manual:reset()
+	gauge_trains_total:reset()
+
+	local manual, total = {}, {}
+	for _, train in pairs(game.train_manager.get_trains({})) do
+		if train.valid then
+			local surface_name = train.carriages[1] and train.carriages[1].surface.name
+			if surface_name then
+				total[surface_name] = (total[surface_name] or 0) + 1
+				if train.manual_mode then
+					manual[surface_name] = (manual[surface_name] or 0) + 1
+				end
+			end
+		end
+	end
+	for surface_name, count in pairs(total) do
+		gauge_trains_total:set(count, { surface_name })
+		gauge_trains_manual:set(manual[surface_name] or 0, { surface_name })
+	end
+end
+
 --- Space platform interior: hub stock, asteroid chunks in flight, pause state.
 --- The base collector reports a platform's state, weight, speed and distance;
 --- none of that says whether it is actually carrying anything or whether its
@@ -164,5 +265,7 @@ function collect_depth(_event)
 	collect_logistic_depth()
 	scanned = collect_rocket_silos(scanned)
 	collect_platform_depth()
+	scanned = collect_logistic_demand(scanned)
+	collect_train_modes()
 	gauge_depth_scanned:set(scanned)
 end
