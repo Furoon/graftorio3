@@ -5,6 +5,29 @@
 -- attribute read -- no event handlers, no storage, no iteration beyond
 -- the filtered surface/force sets already used elsewhere in the mod.
 
+--- Force bonuses and modifiers worth tracking as research progress. Read
+--- through pcall since the set differs between game versions and DLC.
+--- @type string[]
+FORCE_BONUSES = {
+	"mining_drill_productivity_bonus",
+	"laboratory_speed_modifier",
+	"laboratory_productivity_bonus",
+	"worker_robots_speed_modifier",
+	"worker_robots_storage_bonus",
+	"worker_robots_battery_modifier",
+	"inserter_stack_size_bonus",
+	"bulk_inserter_capacity_bonus",
+	"belt_stack_size_bonus",
+	"beacon_distribution_modifier",
+	"artillery_range_modifier",
+	"following_robots_lifetime_modifier",
+	"max_successful_attempts_per_tick_per_construction_queue",
+	"character_running_speed_modifier",
+	"character_health_bonus",
+	"character_inventory_slots_bonus",
+	"character_reach_distance_bonus",
+}
+
 --- Collect map-wide simulation state: speed, pause, real playtime, and the
 --- two difficulty knobs that change how every other rate in the game reads.
 --- @return nil
@@ -30,6 +53,7 @@ local function collect_surface_state(surfaces)
 		gauge_wind_orientation:set(surface.wind_orientation, { surface.name })
 		gauge_freeze_daytime:set(surface.freeze_daytime and 1 or 0, { surface.name })
 		gauge_surface_pollution:set(surface.get_total_pollution(), { surface.name })
+		gauge_daytime:set(surface.daytime, { surface.name })
 
 		for _, entity_type in ipairs(entity_count_types) do
 			local count = surface.count_entities_filtered({ type = entity_type })
@@ -55,6 +79,17 @@ local function collect_force_state()
 			gauge_technologies_researched:set(researched, { force.name })
 			gauge_technologies_total:set(total, { force.name })
 			gauge_friendly_fire:set(force.friendly_fire and 1 or 0, { force.name })
+
+			-- Force bonuses are plain attribute reads. Exposed as one metric
+			-- with the bonus name as a label rather than 24 separate metrics.
+			for _, bonus in ipairs(FORCE_BONUSES) do
+				local ok, value = pcall(function()
+					return force[bonus]
+				end)
+				if ok and type(value) == "number" then
+					gauge_force_bonus:set(value, { force.name, bonus })
+				end
+			end
 		end
 	end
 end

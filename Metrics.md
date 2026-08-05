@@ -50,6 +50,12 @@ Generated from control.lua by scripts/gen_metrics.py -- do not edit by hand.
 | factorio_platform_hub_items | gauge | force, platform, name, quality | items in a space platform hub |
 | factorio_platform_asteroid_chunks | gauge | force, platform | asteroid chunks currently around the platform |
 | factorio_platform_paused | gauge | force, platform | whether the platform is paused (1=paused) |
+| factorio_logistic_requested_items | gauge | force, surface, network, name, quality | items requested but not yet delivered |
+| factorio_logistic_robots | gauge | force, surface, network, kind | robots and cells in a logistic network |
+| factorio_trains_manual | gauge | surface | trains left in manual mode, usually forgotten trains blocking a line |
+| factorio_trains | gauge | surface | trains on the surface |
+| factorio_daytime | gauge | surface | surface daytime (0-1), explains solar output swings |
+| factorio_force_bonus | gauge | force, bonus | force bonus or modifier value |
 | factorio_circuit_network_signal | gauge | force, surface, network, name, quality | the value of a signal in a circuit network |
 | factorio_circuit_network_monitored | gauge | force, surface, network | whether a circuit network with given ID is being monitored |
 | factorio_power_production_input | gauge | force, name, network, surface | power produced |
