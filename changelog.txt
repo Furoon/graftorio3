@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.0
-Date: 2026-08-04
+Date: 2026-08-05
   Minor Features:
     - Item production and consumption can now be split by quality tier
       (graftorio3-production-quality-labels, off by default), using the

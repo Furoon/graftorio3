@@ -2,20 +2,26 @@
 
 **Prometheus metrics for your Factorio server — ported to Factorio 2.1, built for headless dedicated servers.**
 
-graftorio3 exports what your factory is doing — production, power, logistics,
-trains, research, evolution, circuit signals, space platforms — as native
-[Prometheus](https://prometheus.io/) text format, written straight to
-`script-output/graftorio3/game.prom` every few seconds. Point a
+graftorio3 exports what your factory is doing — production, power, machine
+status, logistics, trains, research, evolution, circuit signals, space
+platforms — as native [Prometheus](https://prometheus.io/) text format,
+written straight to `script-output/graftorio3/game.prom` every few seconds.
+Point a
 [node_exporter textfile collector](https://github.com/prometheus/node_exporter#textfile-collector)
 at it and your factory shows up in Grafana next to your CPU graphs, where it
 belongs.
 
 No sidecar process. No agent. No RCON polling. The mod writes, Prometheus scrapes.
 
-## Factorio 2.1
+## Game versions
 
-This fork runs on **Factorio 2.1** (Space Age included) and is verified against
-the 2.1 runtime API. The APIs that 2.1 removed (`LuaEntity.neighbours`,
+Published for **both channels**: the `X.Y.Z` releases target Factorio 2.1 and
+the `X.Y.(Z+1)` releases are the identical mod for the 2.0 stable channel. The
+mod portal offers your game the right one automatically. Space Age is optional
+throughout — without the DLC the platform and quality metrics simply stay
+empty, and CI verifies that on a base-game install every run.
+
+This fork is verified against the 2.1 runtime API. The APIs that 2.1 removed (`LuaEntity.neighbours`,
 `disconnect_neighbour()`) have been replaced with the `LuaWireConnector` API,
 and a set of long-standing silent failures are fixed — most of them only
 visible on the exact setup this mod is for:
@@ -63,6 +69,28 @@ self-contained local stack. This is a development/convenience setup — none of
 it is part of the mod zip.
 
 See [Metrics.md](Metrics.md) for the full list of exported metric families.
+
+## What it measures
+
+Beyond production, power, pollution and research, the parts you will not find
+in other exporters:
+
+- **Machine status** — assemblers, furnaces, drills and labs counted by
+  operational state: working, no power, starved of ingredients, output full.
+  This is the metric that says *where* the factory is stalling.
+- **Electric network reserves** — accumulator charge against capacity and
+  installed generation per network, so you see a brownout coming instead of
+  reading about it afterwards.
+- **Logistics supply and demand** — stock split into storage versus providers,
+  plus outstanding requests, robot and roboport counts per network.
+- **Trains** — trip and waiting times, and how many trains sit in manual mode,
+  which is usually a forgotten train blocking a line.
+- **Space platforms** — hub cargo, asteroid chunks in flight, pause state,
+  alongside weight, speed and distance.
+- **Exporter health** — collection age, series count and per-module error
+  counters, so a broken collector is visible as a metric rather than silence.
+
+See [Metrics.md](Metrics.md) for the complete generated list.
 
 ## Publishing metrics from your own mod
 

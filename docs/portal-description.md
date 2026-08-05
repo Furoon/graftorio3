@@ -12,18 +12,27 @@ having your factory on a dashboard next to everything else you monitor.
 
 ## What you get
 
-- **Production and consumption** for every item and fluid, per surface
-- **Power** per electric network
-- **Machine status** — how many assemblers are working, out of power, starved for
-  ingredients, or backed up with a full output. This is the one that tells you
-  *where* the factory is stalling, not just *that* it is.
-- **Trains** — trip times, waiting times, time between arrivals at a station
-- **Logistics** — bots in use, bots available, items in the network
-- **Research** — current queue and progress, technologies completed
-- **Pollution and evolution** per surface
-- **Rockets launched**, items sent to space, kill and build counts
-- **Space Age** — platform state, weight, speed, distance travelled
-- Plus server-level things like tick rate, pause state and player time
+- **Production and consumption** for every item and fluid, per surface, and
+  optionally split by quality tier
+- **Power** per electric network — and, unlike most exporters, how full your
+  accumulators are and how much generation you actually have installed, so a
+  brownout is something you see coming
+- **Machine status** — how many assemblers are working, out of power, starved
+  for ingredients, or backed up with a full output. This is the one that tells
+  you *where* the factory is stalling, not just *that* it is.
+- **Trains** — trip times, waiting times, time between arrivals, and how many
+  trains are sitting in manual mode (usually a forgotten train blocking a line)
+- **Logistics** — what is in storage versus in providers, what is still being
+  requested, and how many bots and roboports each network has
+- **Research** — current queue and progress, technologies completed, and your
+  accumulated bonuses
+- **Pollution, evolution and daytime** per surface — daytime included because
+  it explains your solar dips
+- **Rockets** — launches, items sent to space, and progress per silo
+- **Space Age** — platform hub cargo, asteroid chunks, state, weight, speed,
+  distance
+- **Exporter health** — if collection ever stops, you get an alert instead of
+  a quietly stale dashboard
 
 ## Setting it up
 
@@ -46,6 +55,12 @@ watching, and whether anything went wrong.
 
 Full setup guide, ready-made Grafana alerts and Prometheus rules:
 https://github.com/Furoon/graftorio3
+
+## Which Factorio version?
+
+Both. There are releases for Factorio 2.1 and for the 2.0 stable channel, and
+the mod portal gives your game the right one. Space Age is entirely optional —
+without it, the platform and quality metrics just stay empty.
 
 ## Running a big base or Space Age?
 
